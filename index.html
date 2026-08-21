@@ -1095,6 +1095,25 @@
         }
 
         // ==================== UTILITIES ====================
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return null;
+            // Handle DD/MM/YYYY formats explicitly
+            if (typeof dateStr === 'string' && dateStr.includes('/')) {
+                const datePart = dateStr.split(/[T\s]/)[0];
+                const parts = datePart.split('/');
+                if (parts.length === 3) {
+                    let d = parts[0], m = parts[1], y = parts[2];
+                    // Fallback if it accidentally reads MM/DD/YYYY
+                    if (parseInt(m, 10) > 12) {
+                        d = parts[1]; m = parts[0];
+                    }
+                    return new Date(Number(y), Number(m) - 1, Number(d));
+                }
+            }
+            // Standard ISO fallback
+            return new Date(dateStr);
+        }
+
         function isTodayInMalaysia(dateRaw) {
             if (!dateRaw) return false;
             
@@ -1208,12 +1227,11 @@
             const dailyMembers = {};
             healthData.forEach(r => {
                 if (!r.date) return;
-                const d = new Date(r.date);
-                if (!isNaN(d.getTime())) {
-                    const dateKey = d.toDateString();
-                    if (!dailyMembers[dateKey]) dailyMembers[dateKey] = new Set();
-                    dailyMembers[dateKey].add(r.member);
-                }
+                const d = parseLocalDate(r.date);
+                if (!d || isNaN(d.getTime())) return;
+                const dateKey = d.toDateString();
+                if (!dailyMembers[dateKey]) dailyMembers[dateKey] = new Set();
+                dailyMembers[dateKey].add(r.member);
             });
 
             const requiredMembersCount = members.length;
@@ -1451,8 +1469,8 @@
             const dataByMemberAndDate = {};
             healthData.forEach(r => {
                 if (!r.glucose || !r.date) return;
-                const d = new Date(r.date);
-                if (isNaN(d.getTime())) return;
+                const d = parseLocalDate(r.date);
+                if (!d || isNaN(d.getTime())) return;
                 const dateStr = d.toDateString();
                 
                 if (dateMap[dateStr] !== undefined) {
@@ -2582,8 +2600,8 @@
             
             healthData.forEach(r => {
                 if (r.member !== member.name || !r.glucose || !r.date || r.mode === 'visit') return;
-                const d = new Date(r.date);
-                if (isNaN(d.getTime())) return;
+                const d = parseLocalDate(r.date);
+                if (!d || isNaN(d.getTime())) return;
                 const dateStr = d.toDateString();
                 
                 if (dateMap[dateStr] !== undefined) {
