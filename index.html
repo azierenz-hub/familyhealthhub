@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Family Health Hub</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        mommy: '#3b82f6', // Blue
+                        daddy: '#22c55e', // Green
+                        qaayed: '#f97316', // Orange
+                        qarizh: '#a855f7', // Purple
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            /* Smooth mesh gradient background */
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background-size: 200% 200%;
+            animation: gradientBG 15s ease infinite;
+            color: #1f2937;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+        }
+        
+        .glass-card {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        }
+        
+        @media (hover: hover) {
+            .glass-card:hover {
+                transform: translateY(-4px) scale(1.02);
+                box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12);
+            }
+        }
+        
+        .glass-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Panda Animations */
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+        .panda-wave {
+            display: inline-block;
+            animation: wave 2s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        @keyframes clap {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2) translateY(-10px); }
+        }
+        .panda-clap {
+            display: inline-block;
+            animation: clap 0.4s 3 ease-in-out;
+        }
+        
+        @keyframes successPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-pop {
+            animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Screen transitions */
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .screen.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom inputs */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            transition: all 0.2s;
+        }
+        .glass-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .status-low { background-color: #fee2e2; color: #dc2626; border: 1px solid #f87171; }
+        .status-normal { background-color: #dcfce7; color: #16a34a; border: 1px solid #4ade80; }
+        .status-borderline { background-color: #fef9c3; color: #ca8a04; border: 1px solid #facc15; }
+        .status-high { background-color: #ffedd5; color: #ea580c; border: 1px solid #fb923c; }
+        .status-very-high { background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; }
+
+        /* Dynamic Glow for Result Cards */
+        .glow-low { box-shadow: 0 4px 20px -2px rgba(239, 68, 68, 0.25); border-color: rgba(239,68,68,0.3); }
+        .glow-normal { box-shadow: 0 4px 20px -2px rgba(74, 222, 128, 0.25); border-color: rgba(74,222,128,0.3); }
+        .glow-borderline { box-shadow: 0 4px 20px -2px rgba(250, 204, 21, 0.25); border-color: rgba(250,204,21,0.3); }
+        .glow-high { box-shadow: 0 4px 20px -2px rgba(249, 115, 22, 0.25); border-color: rgba(249,115,22,0.3); }
+        .glow-very-high { box-shadow: 0 4px 20px -2px rgba(185, 28, 28, 0.25); border-color: rgba(185,28,28,0.3); }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 9999px;
+            padding: 0.25rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #4b5563;
+            z-index: 1;
+        }
+        .mode-btn.active {
+            color: #1f2937;
+        }
+        .mode-slider {
+            position: absolute;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: calc(50% - 0.25rem);
+            background: white;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 0;
+        }
+        
+        /* Health Buddy Animations & Speech Bubbles */
+        @keyframes buddyHappy { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(-12px); } 
+        }
+        .buddy-happy { animation: buddyHappy 2s infinite ease-in-out; }
+        
+        @keyframes buddyThoughtful { 
+            0%, 100% { transform: rotate(0deg); } 
+            25% { transform: rotate(-6deg); } 
+            75% { transform: rotate(6deg); } 
+        }
+        .buddy-thoughtful { animation: buddyThoughtful 3s infinite ease-in-out; transform-origin: bottom center; }
+        
+        @keyframes buddyConcerned { 
+            0%, 100% { transform: scale(1); } 
+            50% { transform: scale(1.04); } 
+        }
+        .buddy-concerned { animation: buddyConcerned 3s infinite ease-in-out; }
+
+        .speech-bubble {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 16px;
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4b5563;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: white transparent transparent transparent;
+        }
+        .glass-card:hover .speech-bubble {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* Stage Spotlight */
+        .stage-spotlight {
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+        }
+
+        /* Decorative Corner Buddies */
+        .corner-buddy-wrapper {
+            position: fixed;
+            z-index: 1;
+            pointer-events: none; /* Never block user clicks */
+            transition: all 0.5s ease;
+            opacity: 0.8;
+        }
+
+        #decorative-buddies-container {
+    pointer-events: none;
+}
+
+.corner-buddy-wrapper {
+    pointer-events: none;
+}
+        
+        .corner-pos-0 { bottom: 20px; left: -10px; } /* Bottom Left */
+        .corner-pos-1 { bottom: 20px; right: -10px; } /* Bottom Right */
+        .corner-pos-2 { top: 25%; left: -15px; } /* Top Left */
+        .corner-pos-3 { top: 35%; right: -15px; } /* Top Right */
+
+        @keyframes peekLeft {
+            0%, 100% { transform: translateX(0) rotate(15deg); }
+            50% { transform: translateX(15px) rotate(5deg); }
+        }
+        @keyframes peekRight {
+            0%, 100% { transform: translateX(0) rotate(-15deg); }
+            50% { transform: translateX(-15px) rotate(-5deg); }
+        }
+        .anim-peek-left { animation: peekLeft 8s infinite ease-in-out; }
+        .anim-peek-right { animation: peekRight 9s infinite ease-in-out; }
+
+        .corner-speech {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4b5563;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            transform: scale(0.9) translateY(10px);
+        }
+        .corner-speech.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        /* Positioning for speech bubbles to stay on screen */
+        .corner-pos-0 .corner-speech { bottom: 100%; left: 20px; margin-bottom: 10px; }
+        .corner-pos-1 .corner-speech { bottom: 100%; right: 20px; margin-bottom: 10px; }
+        .corner-pos-2 .corner-speech { top: 0; left: 100%; margin-left: 15px; }
+        .corner-pos-3 .corner-speech { top: 0; right: 100%; margin-right: 15px; }
+
+/* ===== FIX: Modal Click Area ===== */
+
+/* Decorative buddies must never block clicks */
+#decorative-buddies-container,
+.corner-buddy-wrapper,
+.corner-speech {
+    pointer-events: none !important;
+}
+
+/* Ensure profile modal is always above everything */
+#profile-edit-modal {
+    z-index: 9999 !important;
+}
+
+#profile-edit-content {
+    position: relative;
+    z-index: 10000 !important;
+}
+
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased text-gray-800 pb-12 overflow-x-hidden">
+
+    <main id="app-container" class="max-w-4xl mx-auto px-4 sm:px-6 pt-8 relative">
+        
+        <!-- Decorative Buddies Container -->
+        <div id="decorative-buddies-container"></div>
+
+        <!-- ==================== HOME SCREEN ==================== -->
+        <section id="home-screen" class="screen active">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h1 id="greeting-title" class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-2">Loading... 🐼</h1>
+                    <p class="text-gray-500 font-medium">Let's check in on everyone's health.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="showScreen('glucose-guide-screen')" class="p-3 rounded-full glass hover:bg-white/80 transition-colors shadow-sm" title="Glucose Guide">
+                        <i class="ph-bold ph-book-open text-xl text-blue-500"></i>
+                    </button>
+                    <button onclick="showScreen('settings-screen')" class="p-3 rounded-full glass hover:bg-white/80 transition-colors shadow-sm">
+                        <i class="ph-bold ph-gear text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <button onclick="openSessionSetup()" class="bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-800 transition-colors flex flex-col sm:flex-row items-center justify-center gap-2 text-md sm:text-lg active:scale-[0.98]">
+                    <i class="ph-bold ph-heartbeat text-2xl text-pink-400"></i>
+                    Family Check
+                </button>
+                <button onclick="openHealthVisitSetup()" class="bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-500 transition-colors flex flex-col sm:flex-row items-center justify-center gap-2 text-md sm:text-lg active:scale-[0.98]">
+                    <i class="ph-bold ph-stethoscope text-2xl text-teal-200"></i>
+                    Health Visit
+                </button>
+            </div>
+            <button onclick="showResultsScreen()" class="w-full glass bg-white/80 text-gray-900 font-bold py-4 rounded-2xl shadow-md hover:bg-white transition-colors flex items-center justify-center gap-2 text-lg active:scale-[0.98] mb-8">
+                <i class="ph-bold ph-chart-bar text-2xl text-blue-500"></i>
+                View Today's Results
+            </button>
+
+            <!-- Profiles Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-8" id="profiles-grid">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Today's Timeline -->
+            <div class="mb-10">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-clock-counter-clockwise text-blue-500"></i> Today's Timeline
+                </h3>
+                <div id="today-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Family Trends -->
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="ph-bold ph-chart-line-up text-blue-500"></i> Family Trend
+                    </h3>
+                    <div class="flex bg-white/50 p-1 rounded-lg border border-gray-200">
+                        <button onclick="setTrendRange(7)" id="btn-trend-7d" class="px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all">7D</button>
+                        <button onclick="setTrendRange(30)" id="btn-trend-30d" class="px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all">30D</button>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl shadow-sm">
+                    <div class="relative h-64 w-full">
+                        <canvas id="family-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SESSION SETUP SCREEN ==================== -->
+        <section id="session-setup-screen" class="screen pb-10">
+            <div class="flex items-center mb-8">
+                <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-bold ml-4 flex-1">Start New Health Session</h2>
+            </div>
+
+            <div class="max-w-md mx-auto">
+                <p class="text-gray-500 font-medium mb-6 text-center">What kind of health session is this?</p>
+                
+                <div class="grid grid-cols-1 gap-4 mb-6">
+                    <button onclick="startSession('🌅 After Breakfast')" class="glass p-5 rounded-2xl text-left hover:bg-white/80 transition-all active:scale-[0.98] border border-transparent hover:border-blue-200">
+                        <span class="text-2xl mb-2 block">🌅</span>
+                        <h3 class="font-bold text-gray-900 text-lg">After Breakfast</h3>
+                    </button>
+                    <button onclick="startSession('🍎 Before Lunch')" class="glass p-5 rounded-2xl text-left hover:bg-white/80 transition-all active:scale-[0.98] border border-transparent hover:border-red-200">
+                        <span class="text-2xl mb-2 block">🍎</span>
+                        <h3 class="font-bold text-gray-900 text-lg">Before Lunch</h3>
+                    </button>
+                    <button onclick="startSession('🍽 After Dinner')" class="glass p-5 rounded-2xl text-left hover:bg-white/80 transition-all active:scale-[0.98] border border-transparent hover:border-orange-200 shadow-[0_0_15px_rgba(251,146,60,0.15)] ring-2 ring-orange-100">
+                        <span class="text-2xl mb-2 block">🍽</span>
+                        <h3 class="font-bold text-gray-900 text-lg">After Dinner (Default)</h3>
+                    </button>
+                </div>
+
+                <div class="glass p-5 rounded-2xl border border-transparent hover:border-purple-200 transition-all cursor-pointer" onclick="openCustomSessionScreen()">
+                    <span class="text-2xl mb-2 block">✨</span>
+                    <h3 class="font-bold text-gray-900 text-lg mb-2">Custom Session</h3>
+                    <p class="text-sm text-gray-500 font-medium">Create a setup for specific family members...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== CUSTOM SESSION SETUP SCREEN ==================== -->
+        <section id="custom-session-screen" class="screen pb-10">
+             <div class="flex items-center mb-8">
+                <button onclick="showScreen('session-setup-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-bold ml-4 flex-1">Custom Session</h2>
+            </div>
+            
+            <div class="max-w-md mx-auto space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Session Name</label>
+                    <input type="text" id="custom-session-input-name" placeholder="e.g. After Exercise" class="glass-input w-full px-4 py-3 rounded-xl text-lg transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Who is participating?</label>
+                    <div class="space-y-3" id="custom-session-participants">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <button onclick="startCustomSessionSetup()" class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                    Start Custom Session
+                    <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== HEALTH VISIT SCREEN ==================== -->
+        <section id="health-visit-screen" class="screen pb-10">
+            <div class="flex items-center mb-8">
+                <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-bold ml-4 flex-1">Health Visit Memory</h2>
+            </div>
+            
+            <div class="max-w-md mx-auto space-y-6">
+                <!-- Member Selection -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Who had a visit?</label>
+                    <div class="flex gap-3 overflow-x-auto pb-2" id="visit-member-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Memory Card Details -->
+                <div class="glass p-5 rounded-2xl border border-white/60 space-y-4 shadow-sm bg-gradient-to-br from-white/60 to-white/30">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Visit Date</label>
+                        <input type="date" id="visit-date" class="glass-input w-full px-4 py-3 rounded-xl text-md font-medium text-gray-800 bg-white/50">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Clinic (Optional)</label>
+                            <input type="text" id="visit-clinic" placeholder="e.g. Happy Smiles" class="glass-input w-full px-4 py-3 rounded-xl text-md bg-white/50">
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Doctor (Optional)</label>
+                            <input type="text" id="visit-doctor" placeholder="e.g. Dr. Sarah" class="glass-input w-full px-4 py-3 rounded-xl text-md bg-white/50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visit Type -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Visit Type</label>
+                    <div class="grid grid-cols-2 gap-3" id="visit-type-container">
+                        <button type="button" onclick="selectVisitType('🦷 Dentist')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">🦷 Dentist</button>
+                        <button type="button" onclick="selectVisitType('👁 Eye Check')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">👁 Eye Check</button>
+                        <button type="button" onclick="selectVisitType('💉 Vaccine')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">💉 Vaccine</button>
+                        <button type="button" onclick="selectVisitType('🩺 Clinic Visit')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">🩺 Clinic Visit</button>
+                        <button type="button" onclick="selectVisitType('🏥 Hospital Review')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">🏥 Hospital</button>
+                        <button type="button" onclick="selectVisitType('👂 ENT')" class="visit-type-btn glass px-4 py-3 rounded-xl font-medium text-left border-2 border-transparent transition-all">👂 ENT</button>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                         <input type="text" id="visit-custom-type" placeholder="Other visit type..." class="glass-input flex-1 px-4 py-3 rounded-xl text-md" oninput="selectVisitType('Custom')">
+                    </div>
+                </div>
+
+                <!-- Quick Visit Tags (Dynamic) -->
+                <div id="visit-tags-container" class="hidden">
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Highlights</label>
+                    <div class="flex flex-wrap gap-2" id="visit-tags-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Mood -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Brave Today?</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" data-mood="Super Brave 😎" onclick="selectVisitMood('Super Brave 😎')" class="visit-mood-btn glass py-3 px-2 rounded-xl font-medium border-2 border-transparent transition-all flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-white/80 text-sm">
+                            <span class="text-3xl mb-1">😎</span> Super Brave
+                        </button>
+                        <button type="button" data-mood="Calm 😊" onclick="selectVisitMood('Calm 😊')" class="visit-mood-btn glass py-3 px-2 rounded-xl font-medium border-2 border-transparent transition-all flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-white/80 text-sm">
+                            <span class="text-3xl mb-1">😊</span> Calm
+                        </button>
+                        <button type="button" data-mood="A Little Nervous 😬" onclick="selectVisitMood('A Little Nervous 😬')" class="visit-mood-btn glass py-3 px-2 rounded-xl font-medium border-2 border-transparent transition-all flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-white/80 text-sm">
+                            <span class="text-3xl mb-1">😬</span> Little Nervous
+                        </button>
+                        <button type="button" data-mood="Scared 😢" onclick="selectVisitMood('Scared 😢')" class="visit-mood-btn glass py-3 px-2 rounded-xl font-medium border-2 border-transparent transition-all flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-white/80 text-sm">
+                            <span class="text-3xl mb-1">😢</span> Scared
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expanded Notes -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Scrapbook Notes</label>
+                    <textarea id="visit-notes" rows="3" class="glass-input w-full px-4 py-3 rounded-xl resize-none text-base bg-white/50" placeholder="Didn't cry this time! Got a cool sticker."></textarea>
+                </div>
+
+                <button onclick="saveHealthVisit()" class="w-full bg-teal-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-teal-500 transition-colors active:scale-[0.98] flex items-center justify-center gap-2 text-lg mt-4">
+                    Save Memory
+                    <i class="ph-bold ph-star"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== CHECK-IN SCREEN ==================== -->
+        <section id="check-in-screen" class="screen pb-10">
+            <div class="flex flex-col mb-8">
+                <div class="flex items-center">
+                    <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                        <i class="ph-bold ph-arrow-left text-xl"></i>
+                    </button>
+                    <h2 class="text-2xl font-bold ml-4 flex-1" id="checkin-title">New Reading</h2>
+                </div>
+                <!-- Wizard Progress Tracker (Injected by JS) -->
+                <div id="wizard-progress-container" class="hidden mt-6 relative flex justify-between items-center px-2">
+                </div>
+            </div>
+
+            <div class="max-w-md mx-auto">
+                <!-- Mode Toggle -->
+                <div class="mode-toggle shadow-sm mb-6">
+                    <button id="btn-glucose-only" type="button" onclick="setCheckInMode('glucose')" class="mode-btn active">Glucose Only</button>
+                    <button id="btn-full-check" type="button" onclick="setCheckInMode('full')" class="mode-btn">Full Check</button>
+                    <div id="mode-slider" class="mode-slider"></div>
+                </div>
+
+                <form id="checkin-form" onsubmit="handleSave(event)">
+                    <input type="hidden" id="ci-member">
+                    
+                    <div class="space-y-5">
+                        <!-- Glucose -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1 flex justify-between">
+                                <span>Glucose</span>
+                                <i class="ph-fill ph-drop text-red-400"></i>
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="number" id="ci-glucose" step="0.1" class="glass-input flex-1 px-4 py-3 rounded-xl text-lg" placeholder="e.g. 5.2" required>
+                                <select id="ci-glucose-unit" class="glass-input px-2 py-3 rounded-xl text-md bg-white/50 w-32 font-semibold">
+                                    <option value="mmol/L" selected>mmol/L</option>
+                                    <option value="mg/dL">mg/dL</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Context -->
+                        <div id="ci-context-container">
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Reading Context</label>
+                            <select id="ci-context" class="glass-input w-full px-4 py-3 rounded-xl text-lg bg-white/50">
+                                <option value="After Dinner" selected>After Dinner</option>
+                                <option value="Before Breakfast">Before Breakfast</option>
+                                <option value="Before Meal">Before Meal</option>
+                                <option value="After Meal">After Meal</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div id="full-check-fields" class="space-y-5 hidden opacity-0 transition-opacity duration-300">
+                            <!-- Blood Pressure -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Systolic</label>
+                                    <input type="number" id="ci-sys" class="glass-input w-full px-4 py-3 rounded-xl text-lg" placeholder="120">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Diastolic</label>
+                                    <input type="number" id="ci-dia" class="glass-input w-full px-4 py-3 rounded-xl text-lg" placeholder="80">
+                                </div>
+                            </div>
+
+                            <!-- Pulse & Weight -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Pulse (bpm)</label>
+                                    <input type="number" id="ci-pulse" class="glass-input w-full px-4 py-3 rounded-xl text-lg" placeholder="72">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Weight (kg)</label>
+                                    <input type="number" id="ci-weight" step="0.1" class="glass-input w-full px-4 py-3 rounded-xl text-lg" placeholder="65.0">
+                                </div>
+                            </div>
+
+                            <!-- Temperature -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-1">Temp (°C)</label>
+                                <input type="number" id="ci-temp" step="0.1" class="glass-input w-full px-4 py-3 rounded-xl text-lg" placeholder="36.5">
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Notes (Optional)</label>
+                            <textarea id="ci-notes" rows="2" class="glass-input w-full px-4 py-3 rounded-xl resize-none text-base" placeholder="Feeling great today..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 mt-8">
+                        <button type="submit" class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                            Save Reading
+                            <i class="ph-bold ph-check-circle"></i>
+                        </button>
+                        <button type="button" onclick="skipWizardStep()" id="btn-skip-wizard" class="hidden w-full glass bg-white/50 text-gray-600 font-bold py-3 rounded-xl hover:bg-white/80 transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+                            Skip for Now
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== DASHBOARD SCREEN ==================== -->
+        <section id="dashboard-screen" class="screen pb-10">
+            <!-- Header -->
+            <div class="flex items-center mb-8">
+                <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors shadow-sm">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <div class="flex items-center ml-4 gap-3 flex-1">
+                    <div id="dash-avatar" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm bg-white border border-gray-100"></div>
+                    <div class="flex flex-col">
+                        <h2 class="text-2xl font-bold leading-tight text-gray-900" id="dash-title">Profile</h2>
+                    </div>
+                </div>
+                <button onclick="openCheckInFromDash()" class="glass bg-white/80 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-white text-sm flex items-center gap-1 transition-all active:scale-95">
+                    <i class="ph-bold ph-plus"></i> Add
+                </button>
+            </div>
+
+            <!-- Latest Reading -->
+            <div class="glass p-6 rounded-3xl mb-8 relative overflow-hidden bg-gradient-to-br from-white/80 to-white/40 border border-white/60 shadow-sm">
+                <div class="absolute -right-4 -top-4 text-8xl opacity-10 select-none pointer-events-none" id="dash-bg-icon">🐼</div>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Latest Check-in</span>
+                <div class="flex items-baseline gap-2 mb-3 relative z-10">
+                    <span class="text-5xl font-extrabold text-gray-900 tracking-tight" id="dash-latest-glucose">--</span>
+                    <span class="text-sm font-bold text-gray-500" id="dash-latest-unit">mmol/L</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 relative z-10" id="dash-latest-details">
+                    <!-- Badges go here -->
+                </div>
+            </div>
+
+            <!-- Weekly Summary Cards -->
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="ph-bold ph-calendar-blank text-blue-500"></i> Weekly Summary
+            </h3>
+            <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-8" id="dash-weekly-summary">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Health Insights -->
+            <div class="mb-8" id="dash-insights-container" style="display: none;">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ph-fill ph-sparkles text-yellow-500"></i> Health Insights
+                </h3>
+                <div class="space-y-3" id="dash-insights-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Personal Trend Chart -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="ph-bold ph-chart-line-up text-purple-500"></i> Glucose Trend
+                    </h3>
+                    <div class="flex bg-white/50 p-1 rounded-lg border border-gray-200">
+                        <button onclick="setPersonalTrendRange(7)" id="btn-personal-trend-7d" class="px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all">7D</button>
+                        <button onclick="setPersonalTrendRange(30)" id="btn-personal-trend-30d" class="px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all">30D</button>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl shadow-sm border border-white/60">
+                    <div class="relative h-48 w-full">
+                        <canvas id="personal-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent History -->
+            <div class="mb-4">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-clock-counter-clockwise text-orange-500"></i> Recent History
+                </h3>
+                <div class="space-y-3" id="dash-recent-history">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SETTINGS SCREEN ==================== -->
+        <section id="settings-screen" class="screen pb-10">
+            <div class="flex items-center mb-8">
+                <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-bold ml-4 flex-1">Family Profiles</h2>
+            </div>
+
+            <div class="grid gap-6 md:grid-cols-2" id="settings-profiles-grid">
+                <!-- Profiles populated by JS -->
+            </div>
+
+            <!-- Profile Edit Modal -->
+            <div id="profile-edit-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity">
+                <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl transform scale-95 transition-transform" id="profile-edit-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-900" id="edit-modal-title">Edit Profile</h3>
+                        <button onclick="closeProfileEdit()" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-xl"></i></button>
+                    </div>
+                    <form id="edit-profile-form" onsubmit="saveProfile(event)" class="space-y-4">
+                        <input type="hidden" id="edit-id">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Name *</label>
+                            <input type="text" id="edit-name" class="glass-input w-full px-4 py-2 rounded-xl" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Health Buddy *</label>
+                            <select id="edit-buddy" class="glass-input w-full px-4 py-2 rounded-xl bg-white/50" required>
+                                <option value="🐼">🐼 Panda</option>
+                                <option value="🦫">🦫 Capybara</option>
+                                <option value="🦊">🦊 Fox</option>
+                                <option value="🐰">🐰 Bunny</option>
+                                <option value="🐨">🐨 Koala</option>
+                                <option value="🐻">🐻 Bear</option>
+                                <option value="🐱">🐱 Cat</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-1">Birthday (Optional)</label>
+                                <input type="date" id="edit-birthday" class="glass-input w-full px-4 py-2 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-1">Gender (Optional)</label>
+                                <select id="edit-gender" class="glass-input w-full px-4 py-2 rounded-xl bg-white/50">
+                                    <option value="">Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Favourite Colour Accent (Optional)</label>
+                            <input type="color" id="edit-color" class="h-10 w-full rounded-xl cursor-pointer border-0 bg-transparent">
+                        </div>
+                        <button type="submit" class="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition-colors">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TODAY'S RESULTS SCREEN ==================== -->
+        <section id="results-screen" class="screen pb-10">
+            <!-- Header -->
+            <div class="flex flex-col mb-6">
+                <div class="flex items-center mb-4">
+                    <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                        <i class="ph-bold ph-arrow-left text-xl"></i>
+                    </button>
+                    <h2 class="text-2xl font-bold ml-4 flex-1 text-center">Session Results ❤️</h2>
+                    <div class="w-10"></div> <!-- Spacer -->
+                </div>
+                
+                <!-- Session Selector -->
+                <div class="mx-auto w-full max-w-xs relative">
+                    <select id="session-selector" onchange="changeSessionView()" class="glass-input w-full px-4 py-3 rounded-full text-center font-bold text-gray-800 appearance-none bg-white/70 shadow-sm cursor-pointer border-gray-200">
+                        <option value="">No sessions today</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Panda & Progress -->
+            <div class="text-center mb-8 glass p-6 rounded-3xl">
+                <div class="text-5xl mb-3" id="results-panda-container">
+                    <span class="panda-wave">🐼</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1" id="results-subtitle">Checking statuses...</h3>
+                <p class="text-gray-500 font-medium mb-3" id="results-progress">0 / 4 Completed</p>
+                <div id="results-panda-message" class="text-sm font-semibold bg-white/60 inline-block px-4 py-2 rounded-full text-gray-700 transition-all duration-300">
+                    Loading...
+                </div>
+            </div>
+
+            <!-- Family Result Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8" id="results-cards-grid">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Family Snapshot -->
+            <div class="glass p-6 rounded-3xl mb-8">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ph-fill ph-chart-pie-slice text-blue-500 text-xl"></i> Family Check-In
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="results-snapshot">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <div class="text-center">
+                 <button onclick="toggleDetailsModal()" class="glass bg-white/80 text-gray-900 font-semibold py-3 px-8 rounded-full shadow-md hover:bg-white transition-all active:scale-95 inline-flex items-center gap-2">
+                    <i class="ph-bold ph-list-magnifying-glass"></i>
+                    View Today's Details
+                </button>
+            </div>
+        </section>
+
+        <!-- Details Modal Overlay -->
+        <div id="details-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden flex-col justify-end sm:justify-center items-center pb-0 sm:p-4 opacity-0 transition-opacity duration-300">
+            <div class="bg-white/95 backdrop-blur-md w-full max-w-2xl sm:rounded-3xl rounded-t-3xl p-6 sm:p-8 max-h-[85vh] overflow-y-auto shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="details-modal-content">
+                <div class="flex justify-between items-center mb-6 sticky top-0 bg-white/95 pb-2 z-10">
+                    <h3 class="text-2xl font-bold text-gray-900">Today's Details</h3>
+                    <button onclick="toggleDetailsModal()" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-600 transition-colors">
+                        <i class="ph-bold ph-x text-xl"></i>
+                    </button>
+                </div>
+                <div id="details-list" class="space-y-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div id="success-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-4">
+            <div class="text-center success-pop bg-white/50 p-8 rounded-[3rem] shadow-2xl border border-white max-w-sm w-full">
+                <div class="text-8xl mb-4" id="success-buddy-container">
+                    <span class="panda-clap">🐼</span>
+                </div>
+                <h3 id="success-title" class="text-3xl font-bold text-gray-900 mb-2">Great Job!</h3>
+                <div id="success-status-container" class="mb-4"></div>
+                <p id="success-message" class="text-gray-600 font-medium">Health record saved successfully.</p>
+                
+                <!-- Default Auto-Close Icon -->
+                <div id="default-success-icon" class="mt-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-500">
+                    <i class="ph-bold ph-check text-3xl"></i>
+                </div>
+                
+                <!-- Wizard Next Action Button -->
+                <div id="wizard-next-action" class="hidden mt-8 flex justify-center">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== GLUCOSE GUIDE SCREEN ==================== -->
+        <section id="glucose-guide-screen" class="screen pb-10">
+            <div class="flex items-center mb-8">
+                <button onclick="showScreen('home-screen')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-bold ml-4 flex-1">Glucose Guide</h2>
+            </div>
+
+            <div class="max-w-md mx-auto space-y-4">
+                <!-- Low -->
+                <div class="glass p-5 rounded-2xl border-l-4 border-red-500 bg-red-50/50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <h3 class="text-lg font-bold text-red-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-warning-circle"></i> Low</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-red-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mmol/L</span>
+                            1.1–3.9
+                        </div>
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-red-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mg/dL</span>
+                            20–70
+                        </div>
+                    </div>
+                    <p class="text-sm text-red-800 font-medium">Eat something and monitor.</p>
+                </div>
+
+                <!-- Normal -->
+                <div class="glass p-5 rounded-2xl border-l-4 border-blue-500 bg-blue-50/50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <h3 class="text-lg font-bold text-blue-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-check-circle"></i> Normal</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-blue-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mmol/L</span>
+                            4.0–7.0
+                        </div>
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-blue-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mg/dL</span>
+                            72–126
+                        </div>
+                    </div>
+                    <p class="text-sm text-blue-800 font-medium">Great job.</p>
+                </div>
+
+                <!-- Borderline -->
+                <div class="glass p-5 rounded-2xl border-l-4 border-green-500 bg-green-50/50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <h3 class="text-lg font-bold text-green-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-info"></i> Borderline</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-green-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mmol/L</span>
+                            7.1–10.0
+                        </div>
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-green-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mg/dL</span>
+                            128–180
+                        </div>
+                    </div>
+                    <p class="text-sm text-green-800 font-medium">Monitor closely.</p>
+                </div>
+
+                <!-- High -->
+                <div class="glass p-5 rounded-2xl border-l-4 border-indigo-600 bg-indigo-50/50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <h3 class="text-lg font-bold text-indigo-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-warning"></i> High</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-indigo-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mmol/L</span>
+                            10.1–13.8
+                        </div>
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-indigo-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mg/dL</span>
+                            182–248
+                        </div>
+                    </div>
+                    <p class="text-sm text-indigo-800 font-medium">Reduce sugar intake and monitor.</p>
+                </div>
+
+                <!-- Dangerous -->
+                <div class="glass p-5 rounded-2xl border-l-4 border-yellow-500 bg-yellow-50/50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <h3 class="text-lg font-bold text-yellow-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-warning-octagon"></i> Dangerous</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-yellow-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mmol/L</span>
+                            13.9+
+                        </div>
+                        <div class="bg-white/60 px-3 py-2 rounded-lg font-bold text-yellow-900 flex flex-col">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">mg/dL</span>
+                            250+
+                        </div>
+                    </div>
+                    <p class="text-sm text-yellow-800 font-medium">Seek medical advice immediately.</p>
+                </div>
+
+                <!-- Remember Box -->
+                <div class="mt-8 p-5 rounded-2xl glass bg-white/70 shadow-sm text-center">
+                    <p class="text-sm text-gray-700 font-medium">
+                        <strong class="text-gray-900 block mb-1">Remember</strong>
+                        These ranges are a quick family reference and do not replace professional medical advice.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== WIZARD COMPLETE SCREEN ==================== -->
+        <section id="wizard-complete-screen" class="screen flex flex-col items-center justify-center min-h-[75vh] pb-10">
+            <div class="glass p-10 rounded-[3rem] text-center max-w-md w-full border border-white shadow-xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-50/50 to-blue-50/50 pointer-events-none"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 leading-tight">🎉 Health Session Complete!</h2>
+                    
+                    <p id="wizard-complete-session-name" class="text-lg text-gray-600 font-semibold mb-6">After Dinner • 4 Participants</p>
+
+                    <div id="wizard-complete-buddies" class="flex justify-center gap-2 sm:gap-4 mb-8 text-5xl sm:text-6xl drop-shadow-md">
+                        <!-- Buddies Populated by JS -->
+                    </div>
+                    
+                    <div class="bg-orange-50 text-orange-600 text-lg font-bold px-6 py-3 rounded-2xl inline-flex items-center gap-2 shadow-sm border border-orange-100 mb-8">
+                        <span id="wizard-complete-streak">🔥 Family Streak: -- Days</span>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3">
+                        <button onclick="showResultsScreen(currentSessionId)" class="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-800 transition-transform active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                            View Session Results
+                            <i class="ph-bold ph-chart-bar text-2xl text-blue-400"></i>
+                        </button>
+                        <button onclick="openSessionSetup()" class="w-full glass bg-white/60 text-gray-800 font-bold py-4 rounded-2xl shadow-sm hover:bg-white transition-transform active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                            Start Another Session
+                            <i class="ph-bold ph-plus-circle text-2xl text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxk8nfS87KkdHbB-bWTA9ICZsqdy2KucfPIXp4gYjjio5sO8vFQlLMOPcjGWF3hV0w/exec";
+        
+        // ==================== GLOBAL STATE ====================
+        let members = [
+            { id: 'mommy', name: 'Mommy', icon: '🐼', buddy: '🐼', color: '#f472b6', birthday: '', gender: 'Female' }, // Soft pink
+            { id: 'daddy', name: 'Daddy', icon: '🐻', buddy: '🐻', color: '#a3e635', birthday: '', gender: 'Male' }, // Warm green
+            { id: 'qaayed', name: 'Qaayed', icon: '🦊', buddy: '🦊', color: '#3b82f6', birthday: '', gender: 'Male' }, // Blue
+            { id: 'qarizh', name: 'Qarizh', icon: '🦫', buddy: '🦫', color: '#22c55e', birthday: '', gender: 'Male' } // Green
+        ];
+
+        let currentActiveMember = null;
+        let healthData = [];
+        let charts = {};
+        let familyChartInstance = null;
+        let currentTrendRange = 7;
+        
+        let personalChartInstance = null;
+        let currentPersonalTrendRange = 7;
+        
+        // Form & Wizard State
+        let currentCheckInMode = 'glucose'; // 'glucose' or 'full'
+        let wizardQueue = [];
+        let isWizardActive = false;
+        let currentSessionId = null;
+        let currentSessionName = null;
+        let sessionParticipantsCompleted = 0;
+        let customSessionParticipants = [];
+        
+        // Visit & UI State
+        let activeVisitState = { memberId: null, type: null, mood: null };
+        let activeVisitTags = [];
+        let speechInterval = null;
+        
+        const visitTagsMap = {
+            '🦷 Dentist': ['🪥 Check-up', '🦷 Cleaning', '🦷 Filling', '😁 First Visit', '⭐ No Cavities'],
+            '🩺 Clinic Visit': ['🤒 Fever', '🤧 Cough', '💊 Medicine', '📋 Follow-up'],
+            '🏥 Hospital Review': ['📋 Follow-up', '🩸 Blood Test', '🩻 X-Ray'],
+            '👁 Eye Check': ['👓 New Glasses', '👁 Vision Test', '⭐ Perfect Vision'],
+            '💉 Vaccine': ['💪 Brave Arm', '🍭 Got a Lollipop', '🩹 Tiny Pinch'],
+            '👂 ENT': ['👂 Ear Check', '👃 Nose Check', '喉 Throat Check']
+        };
+
+        const positiveMessages = [
+            "Great job! 💖", "Everyone checked in! 🎉", "I'm cheering for you!", 
+            "Let's keep going!", "Looking good today!", "Family health rocks!"
+        ];
+
+        // ==================== INITIALIZATION ====================
+        function initApp() {
+            fetchHealthData();
+            initDecorativeBuddies();
+            renderSettingsProfiles();
+        }
+
+        // ==================== UTILITIES ====================
+        function calculateAge(dateString) {
+            if (!dateString) return '';
+            const today = new Date();
+            const birthDate = new Date(dateString);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return `${age} yrs`;
+        }
+
+        function formatFriendlyTime(timeRaw) {
+            if (!timeRaw) return '';
+            try {
+                const d = new Date(timeRaw);
+                // Handle 1899 Google Sheets base dates robustly
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            } catch(e) {}
+            return timeRaw;
+        }
+
+        function formatFriendlyDate(dateRaw) {
+            if (!dateRaw) return '';
+            try {
+                const d = new Date(dateRaw);
+                if (!isNaN(d.getTime())) {
+                    return `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`;
+                }
+            } catch(e) {}
+            return dateRaw;
+        }
+
+        function classifyGlucose(value, unit = 'mmol/L') {
+            const numVal = parseFloat(value);
+            if (isNaN(numVal)) return { label: 'Unknown', class: 'status-normal' };
+            
+            if (unit === 'mg/dL') {
+                if (numVal < 72) return { label: 'Low', class: 'status-low' };
+                if (numVal <= 126) return { label: 'Normal', class: 'status-normal' };
+                if (numVal <= 180) return { label: 'Borderline', class: 'status-borderline' };
+                if (numVal <= 248) return { label: 'High', class: 'status-high' };
+                return { label: 'Dangerous', class: 'status-very-high' };
+            } else {
+                if (numVal < 4.0) return { label: 'Low', class: 'status-low' };
+                if (numVal <= 7.0) return { label: 'Normal', class: 'status-normal' };
+                if (numVal <= 10.0) return { label: 'Borderline', class: 'status-borderline' };
+                if (numVal <= 13.8) return { label: 'High', class: 'status-high' };
+                return { label: 'Dangerous', class: 'status-very-high' };
+            }
+        }
+
+        function getLatestReading(memberName) {
+            const memberData = healthData.filter(d => d.member === memberName);
+            return memberData.length > 0 ? memberData[memberData.length - 1] : null;
+        }
+
+        function getFamilyStreak() {
+            if (!healthData || healthData.length === 0) return 0;
+
+            // Group records by calendar date and track unique members who completed a reading
+            const dailyMembers = {};
+            healthData.forEach(r => {
+                if (!r.date) return;
+                const d = new Date(r.date);
+                if (!isNaN(d.getTime())) {
+                    const dateKey = d.toDateString();
+                    if (!dailyMembers[dateKey]) dailyMembers[dateKey] = new Set();
+                    dailyMembers[dateKey].add(r.member);
+                }
+            });
+
+            const requiredMembersCount = members.length;
+            let streak = 0;
+            let currentDate = new Date();
+            
+            // Check if today is completed by everyone
+            const todayStr = currentDate.toDateString();
+            if (dailyMembers[todayStr] && dailyMembers[todayStr].size >= requiredMembersCount) {
+                streak++;
+            }
+
+            // Step backward day by day to count consecutive complete days
+            let checkDate = new Date(currentDate);
+            checkDate.setDate(checkDate.getDate() - 1);
+
+            while (true) {
+                const checkStr = checkDate.toDateString();
+                if (dailyMembers[checkStr] && dailyMembers[checkStr].size >= requiredMembersCount) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    // Broken streak (yesterday or an older consecutive day was missed)
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        // ==================== API & DATA FETCHING ====================
+        async function fetchHealthData() {
+            try {
+                if (GAS_WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                    healthData = [];
+                } else {
+                    const res = await fetch(GAS_WEB_APP_URL);
+                    const json = await res.json();
+                    if (json.status === 'success' && json.data) {
+                        healthData = json.data;
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to fetch live data, using empty state:", e);
+                healthData = [];
+            }
+            
+            document.getElementById('greeting-title').innerText = "Good Evening Family ❤️";
+            renderHomeCards();
+            renderTodayTimeline();
+            renderFamilyTrendGraph();
+        }
+
+        // ==================== NAVIGATION & RENDERING ====================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            setTimeout(() => {
+                const target = document.getElementById(screenId);
+                if (target) target.classList.add('active');
+            }, 50);
+        }
+
+        function renderHomeCards() {
+            const grid = document.getElementById('profiles-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            const familyStreak = getFamilyStreak();
+            const streakText = familyStreak === 1 ? '1 Day' : familyStreak + ' Days';
+
+            members.forEach(m => {
+                const latest = getLatestReading(m.name);
+                const bgStyle = `background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%); border-top: 4px solid ${m.color}`;
+
+                let glucoseStatusHtml = '';
+                let sessionInfoHtml = '';
+
+                if (latest && latest.glucose) {
+                    const unit = latest.glucoseUnit || 'mmol/L';
+                    const status = classifyGlucose(latest.glucose, unit);
+                    glucoseStatusHtml = `<span class="status-badge ${status.class} mt-2">${status.label}</span>`;
+                    
+                    const timeStr = formatFriendlyTime(latest.time);
+                    sessionInfoHtml = `
+                        <div class="mt-3 text-xs font-semibold text-gray-500 bg-white/50 inline-block px-3 py-1.5 rounded-lg border border-white shadow-sm">
+                            ${latest.sessionName || latest.context || 'Recorded'} • 🕒 ${timeStr}
+                        </div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'glass-card glass rounded-3xl p-5 cursor-pointer relative overflow-hidden flex flex-col h-full';
+                card.style = bgStyle;
+                card.onclick = () => showDashboard(m);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-3xl bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-sm border border-gray-100">
+                            ${m.buddy}
+                        </div>
+                        <div class="bg-orange-50 text-orange-600 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-orange-100">
+                            🔥 ${streakText}
+                        </div>
+                    </div>
+                    <div class="flex flex-col mb-4">
+                        <h3 class="text-xl font-bold text-gray-900">${m.name}</h3>
+                        <div class="flex flex-col items-start">
+                            ${glucoseStatusHtml}
+                            ${sessionInfoHtml}
+                        </div>
+                    </div>
+                    <div class="space-y-3 mt-auto">
+                        <div class="flex items-center justify-between text-sm bg-white/50 px-3 py-2 rounded-xl">
+                            <span class="text-gray-500 flex items-center gap-1"><i class="ph-fill ph-drop text-red-400"></i> Glucose</span>
+                            <span class="font-semibold text-gray-800">${latest ? latest.glucose + ' <span class="text-xs text-gray-500 ml-1">' + (latest.glucoseUnit || 'mmol/L') + '</span>' : '--'}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm bg-white/50 px-3 py-2 rounded-xl opacity-${latest && latest.mode === 'glucose' ? '50' : '100'}">
+                            <span class="text-gray-500 flex items-center gap-1"><i class="ph-fill ph-heartbeat text-pink-400"></i> BP</span>
+                            <span class="font-semibold text-gray-800">${latest && latest.sys ? latest.sys + '/' + latest.dia : '--'}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderTodayTimeline() {
+            const container = document.getElementById('today-timeline');
+            if (!container) return;
+            
+            const todayStr = new Date().toDateString();
+            const todayRecords = healthData.filter(r => {
+                if (!r.date) return false;
+                const d = new Date(r.date);
+                return !isNaN(d.getTime()) && d.toDateString() === todayStr;
+            });
+
+            if (todayRecords.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 font-medium py-6 glass rounded-2xl">No activity recorded today yet.</div>';
+                return;
+            }
+
+            // Sort descending (newest first)
+            todayRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let html = '';
+            todayRecords.forEach(r => {
+                const memberObj = members.find(m => m.name === r.member) || { buddy: '👤', color: '#ccc' };
+                const timeFormatted = formatFriendlyTime(r.time);
+                
+                let contentHtml = '';
+                if (r.mode === 'visit') {
+                    contentHtml = `
+                        <div class="mt-2 text-sm font-bold text-teal-700 bg-teal-50/50 px-3 py-1.5 rounded-lg inline-block border border-teal-100">
+                            ${r.sessionName || 'Health Visit'}
+                        </div>
+                        ${r.notes ? `<div class="text-xs text-gray-500 mt-2 italic">"${r.notes}"</div>` : ''}
+                    `;
+                } else {
+                    const unit = r.glucoseUnit || 'mmol/L';
+                    let statusHtml = '';
+                    if (r.glucose) {
+                        const status = classifyGlucose(r.glucose, unit);
+                        statusHtml = `<span class="status-badge ${status.class} !text-[10px] ml-2 shadow-sm">${status.label}</span>`;
+                    }
+                    
+                    contentHtml = `
+                        <div class="mt-2 flex items-center">
+                            <span class="font-extrabold text-gray-900 text-xl tracking-tight">${r.glucose ? r.glucose : '--'} <span class="text-xs font-bold text-gray-400 tracking-normal">${unit}</span></span>
+                            ${statusHtml}
+                        </div>
+                        <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">${r.context || r.sessionName || 'Reading'}</div>
+                    `;
+                }
+
+                html += `
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group mb-4 last:mb-0">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white bg-white shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10" style="color: ${memberObj.color}">
+                            <span class="text-xl">${memberObj.buddy}</span>
+                        </div>
+                        <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass p-4 rounded-2xl border border-white/60 shadow-sm transition-transform hover:-translate-y-1">
+                            <div class="flex justify-between items-start">
+                                <span class="font-bold text-gray-900">${r.member}</span>
+                                <span class="text-xs font-semibold text-gray-500 bg-white/80 px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1"><i class="ph-bold ph-clock"></i> ${timeFormatted}</span>
+                            </div>
+                            ${contentHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function setTrendRange(days) {
+            currentTrendRange = days;
+            document.getElementById('btn-trend-7d').className = days === 7 
+                ? 'px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all'
+                : 'px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all';
+            document.getElementById('btn-trend-30d').className = days === 30
+                ? 'px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all'
+                : 'px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all';
+            renderFamilyTrendGraph();
+        }
+
+        function renderFamilyTrendGraph() {
+            if (typeof Chart === 'undefined') return;
+            const ctx = document.getElementById('family-trend-chart');
+            if (!ctx) return;
+
+            const daysToFetch = typeof currentTrendRange !== 'undefined' ? currentTrendRange : 7;
+            const labels = [];
+            const dateMap = {}; 
+            
+            // Generate last N days labels
+            for (let i = daysToFetch - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toDateString();
+                const friendlyLabel = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+                labels.push(friendlyLabel);
+                dateMap[dateStr] = (daysToFetch - 1) - i;
+            }
+
+            // Prepare dataset per family member
+            const datasets = members.map(m => ({
+                label: m.name,
+                data: new Array(daysToFetch).fill(null),
+                borderColor: m.color,
+                backgroundColor: m.color,
+                borderWidth: 3,
+                tension: 0.4,
+                spanGaps: true,
+                pointBackgroundColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: daysToFetch > 14 ? 2 : 4,
+                pointHoverRadius: 6
+            }));
+
+            // Group readings by member and date
+            const dataByMemberAndDate = {};
+            healthData.forEach(r => {
+                if (!r.glucose || !r.date) return;
+                const d = new Date(r.date);
+                if (isNaN(d.getTime())) return;
+                const dateStr = d.toDateString();
+                
+                if (dateMap[dateStr] !== undefined) {
+                    if (!dataByMemberAndDate[r.member]) dataByMemberAndDate[r.member] = {};
+                    if (!dataByMemberAndDate[r.member][dateStr]) dataByMemberAndDate[r.member][dateStr] = [];
+                    dataByMemberAndDate[r.member][dateStr].push(parseFloat(r.glucose));
+                }
+            });
+
+            // Calculate daily averages
+            members.forEach((m, i) => {
+                if (dataByMemberAndDate[m.name]) {
+                    Object.keys(dataByMemberAndDate[m.name]).forEach(dateStr => {
+                        const idx = dateMap[dateStr];
+                        const values = dataByMemberAndDate[m.name][dateStr];
+                        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                        datasets[i].data[idx] = avg.toFixed(1);
+                    });
+                }
+            });
+
+            if (familyChartInstance) {
+                familyChartInstance.destroy();
+            }
+
+            familyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { usePointStyle: true, boxWidth: 8, padding: 20, font: { family: 'Inter', weight: 600 } }
+                        },
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4,
+                            usePointStyle: true
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { 
+                                font: { family: 'Inter', size: 11 }, 
+                                color: '#6b7280',
+                                maxTicksLimit: daysToFetch === 30 ? 10 : undefined
+                            }
+                        },
+                        y: { 
+                            border: { display: false },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Inter', size: 11 }, color: '#6b7280', padding: 10 }
+                        }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        }
+
+        // ==================== SESSION MANAGEMENT ====================
+        function openSessionSetup() {
+            showScreen('session-setup-screen');
+        }
+
+        function openCustomSessionScreen() {
+            document.getElementById('custom-session-input-name').value = '';
+            document.getElementById('custom-session-input-name').classList.remove('border-red-500', 'bg-red-50');
+            
+            customSessionParticipants = members.map(m => m.id);
+            const container = document.getElementById('custom-session-participants');
+            
+            container.innerHTML = members.map(m => `
+                <div class="flex items-center justify-between glass p-4 rounded-xl cursor-pointer hover:bg-white/80 border border-transparent transition-all" onclick="toggleCustomParticipant('${m.id}')" id="participant-card-${m.id}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white text-xl border-2 shadow-sm" style="border-color: ${m.color}">${m.buddy}</div>
+                        <span class="font-bold text-gray-900">${m.name}</span>
+                    </div>
+                    <div class="w-6 h-6 rounded-full border-2 border-blue-500 bg-blue-500 flex items-center justify-center text-white transition-all" id="participant-check-${m.id}">
+                        <i class="ph-bold ph-check text-sm"></i>
+                    </div>
+                </div>
+            `).join('');
+            
+            showScreen('custom-session-screen');
+        }
+
+        function toggleCustomParticipant(id) {
+            const index = customSessionParticipants.indexOf(id);
+            const check = document.getElementById(`participant-check-${id}`);
+            const card = document.getElementById(`participant-card-${id}`);
+
+            if (index > -1) {
+                customSessionParticipants.splice(index, 1);
+                check.classList.remove('bg-blue-500', 'border-blue-500');
+                check.classList.add('bg-white', 'border-gray-300');
+                check.innerHTML = '';
+                card.classList.add('opacity-50');
+            } else {
+                customSessionParticipants.push(id);
+                check.classList.add('bg-blue-500', 'border-blue-500');
+                check.classList.remove('bg-white', 'border-gray-300');
+                check.innerHTML = '<i class="ph-bold ph-check text-sm"></i>';
+                card.classList.remove('opacity-50');
+            }
+        }
+
+        function startCustomSessionSetup() {
+            const nameInput = document.getElementById('custom-session-input-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                nameInput.classList.add('border-red-500', 'bg-red-50');
+                setTimeout(() => nameInput.classList.remove('border-red-500', 'bg-red-50'), 1000);
+                return;
+            }
+            if (customSessionParticipants.length === 0) return;
+            startSession(`✨ ${name}`, customSessionParticipants);
+        }
+
+        function startSession(sessionName, participantIds = null) {
+            currentSessionId = "S" + Date.now();
+            currentSessionName = sessionName;
+            
+            localStorage.setItem('currentSession', JSON.stringify({
+                sessionId: currentSessionId,
+                sessionName: currentSessionName
+            }));
+            
+            let queueMembers = members;
+            if (participantIds && participantIds.length > 0) {
+                queueMembers = members.filter(m => participantIds.includes(m.id));
+            }
+            
+            wizardQueue = [...queueMembers];
+            isWizardActive = true;
+            sessionParticipantsCompleted = 0;
+            
+            if (wizardQueue.length > 0) {
+                openCheckIn(wizardQueue[0].id, true);
+            }
+        }
+
+        function skipWizardStep() {
+            if(!isWizardActive) return;
+            const currentMemberId = document.getElementById('ci-member').value;
+            const currentIdx = wizardQueue.findIndex(m => m.name === currentMemberId);
+            const nextIndex = currentIdx + 1;
+            
+            if (nextIndex < wizardQueue.length) {
+                openCheckIn(wizardQueue[nextIndex].id, true);
+            } else {
+                showWizardComplete();
+            }
+        }
+
+        // ==================== CHECK-IN FLOW ====================
+        function openCheckInFromDash() {
+            if(currentActiveMember) {
+                openCheckIn(currentActiveMember.id, false);
+            }
+        }
+
+        function setCheckInMode(mode) {
+            currentCheckInMode = mode;
+            const slider = document.getElementById('mode-slider');
+            const btnGlucose = document.getElementById('btn-glucose-only');
+            const btnFull = document.getElementById('btn-full-check');
+            const fullFields = document.getElementById('full-check-fields');
+            
+            const optionalInputs = [
+                document.getElementById('ci-sys'), document.getElementById('ci-dia'),
+                document.getElementById('ci-pulse'), document.getElementById('ci-weight'),
+                document.getElementById('ci-temp')
+            ];
+            
+            if (mode === 'glucose') {
+                slider.style.transform = 'translateX(0)';
+                btnGlucose.classList.add('active');
+                btnFull.classList.remove('active');
+                fullFields.style.display = 'none';
+                setTimeout(() => { fullFields.classList.remove('opacity-100'); fullFields.classList.add('opacity-0'); }, 10);
+            } else {
+                slider.style.transform = 'translateX(100%)';
+                btnFull.classList.add('active');
+                btnGlucose.classList.remove('active');
+                fullFields.style.display = 'block';
+                setTimeout(() => { fullFields.classList.remove('opacity-0'); fullFields.classList.add('opacity-100'); }, 10);
+            }
+
+            // Ensure optional fields are NEVER required
+            optionalInputs.forEach(input => { if (input) input.required = false; });
+        }
+
+        function renderWizardProgress(currentId) {
+            const container = document.getElementById('wizard-progress-container');
+            const today = new Date().toDateString();
+            
+            let html = '<div class="absolute top-1/2 left-4 right-4 h-1 bg-gray-200 -z-10 rounded-full transform -translate-y-1/2"></div>';
+            
+            wizardQueue.forEach((m) => {
+                const isCurrent = m.id === currentId;
+                const hasCompleted = isWizardActive && wizardQueue.findIndex(q => q.id === m.id) < wizardQueue.findIndex(q => q.id === currentId);
+                
+                let bgClass = 'bg-white border-2 border-gray-200 text-gray-400 grayscale opacity-70';
+                let iconHtml = m.buddy;
+                
+                if (hasCompleted) {
+                    bgClass = 'bg-green-100 border-2 border-green-400 text-green-600 shadow-sm';
+                    iconHtml = '<i class="ph-bold ph-check text-green-600"></i>';
+                } else if (isCurrent) {
+                    bgClass = `bg-white border-4 shadow-md scale-125 z-10`;
+                    iconHtml = m.buddy;
+                }
+
+                html += `
+                    <div class="relative flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all duration-300 ${bgClass}" ${isCurrent ? `style="border-color: ${m.color}"` : ''}>
+                            ${iconHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function openCheckIn(memberId, isWizard = false) {
+            isWizardActive = isWizard;
+            const member = members.find(m => m.id === memberId);
+            const titleEl = document.getElementById('checkin-title');
+            const progressContainer = document.getElementById('wizard-progress-container');
+            const skipBtn = document.getElementById('btn-skip-wizard');
+            const contextContainer = document.getElementById('ci-context-container');
+            
+            if (isWizard) {
+                const total = wizardQueue.length;
+                const currentIdx = wizardQueue.findIndex(m => m.id === memberId);
+                titleEl.innerHTML = `<span class="text-sm font-semibold text-gray-500 block mb-1 uppercase tracking-wider">Step ${currentIdx + 1} of ${total}</span>${member.icon} ${member.name}'s Reading`;
+                
+                renderWizardProgress(memberId);
+                progressContainer.classList.remove('hidden');
+                skipBtn.classList.remove('hidden'); 
+                contextContainer.style.display = 'none'; 
+            } else {
+                titleEl.innerHTML = `${member.icon} ${member.name}'s Reading`;
+                progressContainer.classList.add('hidden');
+                skipBtn.classList.add('hidden');
+                contextContainer.style.display = 'block'; 
+            }
+
+            document.getElementById('ci-member').value = member.name;
+            document.getElementById('checkin-form').reset();
+            setCheckInMode('glucose');
+            
+            const latest = getLatestReading(member.name);
+            if(latest && latest.weight) {
+                document.getElementById('ci-weight').value = latest.weight;
+            }
+
+            showScreen('check-in-screen');
+        }
+
+        async function handleSave(e) {
+            e.preventDefault();
+            
+            const memberName = document.getElementById('ci-member').value;
+            const glucoseValue = document.getElementById('ci-glucose').value;
+            const glucoseUnit = document.getElementById('ci-glucose-unit') ? document.getElementById('ci-glucose-unit').value : 'mmol/L';
+            
+            let finalContext = document.getElementById('ci-context').value;
+            let sessId = currentSessionId;
+            let sessName = currentSessionName;
+
+            if (!isWizardActive) {
+                sessId = "S" + Date.now();
+                sessName = finalContext;
+            } else if (!sessId) {
+                const savedSession = JSON.parse(localStorage.getItem('currentSession') || '{}');
+                if (savedSession.sessionId) {
+                    sessId = savedSession.sessionId;
+                    sessName = savedSession.sessionName;
+                    currentSessionId = sessId;
+                    currentSessionName = sessName;
+                } else {
+                    sessId = "S" + Date.now();
+                    sessName = finalContext;
+                }
+            }
+
+            if (isWizardActive && sessName) {
+                finalContext = sessName.replace(/[\u1000-\uFFFF]+/g, '').trim();
+            }
+            
+            const now = new Date();
+            
+            const newRecord = {
+                member: memberName,
+                date: now.toISOString(),
+                time: now.toISOString(),
+                context: finalContext,
+                glucose: glucoseValue,
+                glucoseUnit: glucoseUnit,
+                notes: document.getElementById('ci-notes').value,
+                mode: currentCheckInMode,
+                sessionId: sessId,
+                sessionName: sessName
+            };
+
+            if (currentCheckInMode === 'full') {
+                newRecord.sys = document.getElementById('ci-sys').value;
+                newRecord.dia = document.getElementById('ci-dia').value;
+                newRecord.pulse = document.getElementById('ci-pulse').value;
+                newRecord.weight = document.getElementById('ci-weight').value;
+                newRecord.temp = document.getElementById('ci-temp').value;
+            } else {
+                newRecord.sys = ''; newRecord.dia = ''; newRecord.pulse = ''; newRecord.weight = ''; newRecord.temp = '';
+            }
+
+            healthData.push(newRecord);
+            if (isWizardActive) sessionParticipantsCompleted++;
+            
+            renderHomeCards(); 
+            renderTodayTimeline();
+            renderFamilyTrendGraph();
+            
+            const status = classifyGlucose(glucoseValue, glucoseUnit);
+            const currentMemberObj = members.find(m => m.name === memberName);
+
+            document.getElementById('success-status-container').innerHTML = `
+                <div class="flex flex-col items-center mb-2">
+                    <span class="text-sm text-gray-500 font-bold mb-1">Glucose Level</span>
+                    <span class="status-badge ${status.class} text-lg px-4 py-1.5 shadow-sm">${status.label} (${glucoseValue} ${glucoseUnit})</span>
+                </div>
+            `;
+            
+            const overlay = document.getElementById('success-overlay');
+            const successTitle = document.getElementById('success-title');
+            const successMessage = document.getElementById('success-message');
+            const wizardActionContainer = document.getElementById('wizard-next-action');
+            const defaultIcon = document.getElementById('default-success-icon');
+            const buddyContainer = document.getElementById('success-buddy-container');
+            
+            let popupTitle = "";
+            let popupMessage = "";
+            let buddyAnim = "panda-clap"; 
+
+            if (status.label === 'Low') {
+                popupTitle = `Take care, ${memberName}.`;
+                popupMessage = `Your reading is lower than normal. Have a quick source of sugar if appropriate and monitor again.`;
+                buddyAnim = "buddy-concerned";
+            } else if (status.label === 'Normal') {
+                popupTitle = `Great job, ${memberName}!`;
+                popupMessage = `Your reading is within the normal range. Keep up the healthy habits.`;
+                buddyAnim = "buddy-happy";
+            } else if (status.label === 'Borderline') {
+                popupTitle = `Nice check-in, ${memberName}!`;
+                popupMessage = `Your reading is a little higher than normal. Drink some water, stay active, and continue monitoring.`;
+                buddyAnim = "buddy-thoughtful";
+            } else if (status.label === 'High') {
+                popupTitle = `Thanks for checking in, ${memberName}.`;
+                popupMessage = `Your reading is higher than recommended. Rest, monitor your next reading, and follow your healthcare plan.`;
+                buddyAnim = "buddy-concerned";
+            } else if (status.label === 'Dangerous') {
+                popupTitle = `Take care, ${memberName}.`;
+                popupMessage = `This reading is very high. Please consider seeking medical advice immediately if you feel unwell.`;
+                buddyAnim = "buddy-concerned";
+            } else {
+                popupTitle = `Check-in Complete, ${memberName}!`;
+                popupMessage = `Health record saved successfully.`;
+            }
+
+            successTitle.innerText = popupTitle;
+            if(successMessage) {
+                successMessage.innerText = popupMessage;
+            }
+            
+            buddyContainer.innerHTML = `<span class="${buddyAnim} inline-block">${currentMemberObj.buddy}</span>`;
+            overlay.style.display = 'flex';
+            
+            if (isWizardActive) {
+                defaultIcon.classList.add('hidden');
+                wizardActionContainer.classList.remove('hidden');
+                
+                const nextIndex = wizardQueue.findIndex(m => m.name === memberName) + 1;
+                
+                if (nextIndex < wizardQueue.length) {
+                    const nextMember = wizardQueue[nextIndex];
+                    wizardActionContainer.innerHTML = `
+                        <button onclick="continueWizard('${nextMember.id}')" type="button" class="bg-gray-900 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-800 transition-transform active:scale-95 flex items-center gap-2 text-lg">
+                            📱 Pass to ${nextMember.name} <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    `;
+                } else {
+                    wizardActionContainer.innerHTML = `
+                        <button onclick="showWizardComplete()" type="button" class="bg-green-500 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:bg-green-600 transition-transform active:scale-95 flex items-center gap-2 text-lg">
+                            Finish Session <i class="ph-bold ph-check-circle"></i>
+                        </button>
+                    `;
+                }
+            } else {
+                defaultIcon.classList.remove('hidden');
+                wizardActionContainer.classList.add('hidden');
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    if(currentActiveMember && currentActiveMember.name === memberName) {
+                        showDashboard(currentActiveMember);
+                    } else {
+                        showScreen('home-screen');
+                    }
+                }, 2000);
+            }
+            
+            if (GAS_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                try {
+                    fetch(GAS_WEB_APP_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newRecord) 
+                    }).catch(err => console.log("Silent failure on API"));
+                } catch(e) {}
+            }
+        }
+
+        function continueWizard(nextMemberId) {
+            document.getElementById('success-overlay').style.display = 'none';
+            openCheckIn(nextMemberId, true);
+        }
+
+        function showWizardComplete() {
+            document.getElementById('success-overlay').style.display = 'none';
+            isWizardActive = false;
+            localStorage.removeItem('currentSession');
+            
+            const familyStreak = getFamilyStreak();
+            const streakText = familyStreak === 1 ? '1 Day' : familyStreak + ' Days';
+            
+            const buddiesHtml = members.map((m, i) => `
+                <div class="panda-clap" style="animation-delay: ${i * 0.15}s">${m.buddy}</div>
+            `).join('');
+
+            document.getElementById('wizard-complete-buddies').innerHTML = buddiesHtml;
+            document.getElementById('wizard-complete-streak').innerText = `🔥 Family Streak: ${streakText}`;
+            document.getElementById('wizard-complete-session-name').innerText = `${currentSessionName} • ${sessionParticipantsCompleted} Participants`;
+            
+            showScreen('wizard-complete-screen');
+            triggerConfetti();
+        }
+
+        // ==================== SESSION RESULTS ====================
+        function changeSessionView() {
+            const selector = document.getElementById('session-selector');
+            showResultsScreen(selector.value);
+        }
+
+        function showResultsScreen(targetSessionId = null) {
+            const today = new Date().toDateString();
+            const todayRecords = healthData.filter(d => d.date && new Date(d.date).toDateString() === today && d.sessionId && !d.sessionId.startsWith('V'));
+            
+            const sessionsMap = new Map();
+            todayRecords.forEach(r => {
+                if(!sessionsMap.has(r.sessionId)) {
+                    const dateFormatted = formatFriendlyDate(r.date);
+                    const timeFormatted = formatFriendlyTime(r.time);
+                    sessionsMap.set(r.sessionId, { name: r.sessionName, id: r.sessionId, time: timeFormatted, dateStr: dateFormatted, rawDate: r.date });
+                }
+            });
+            
+            const sessionsList = Array.from(sessionsMap.values()).sort((a,b) => new Date(a.rawDate) - new Date(b.rawDate));
+            const selector = document.getElementById('session-selector');
+            selector.innerHTML = '';
+            
+            if(sessionsList.length === 0) {
+                selector.innerHTML = '<option value="">No sessions today</option>';
+                selector.disabled = true;
+                targetSessionId = null;
+            } else {
+                selector.disabled = false;
+                sessionsList.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = `${s.name} (${s.dateStr} • ${s.time})`;
+                    selector.appendChild(opt);
+                });
+                
+                if (!targetSessionId || !sessionsMap.has(targetSessionId)) {
+                    targetSessionId = sessionsList[sessionsList.length - 1].id;
+                }
+                selector.value = targetSessionId;
+            }
+
+            const todayReadings = [];
+            const statuses = {};
+            const contexts = new Set();
+            
+            members.forEach(m => {
+                const memberData = targetSessionId 
+                    ? healthData.filter(d => d.member === m.name && d.sessionId === targetSessionId)
+                    : [];
+                
+                if (memberData.length > 0) {
+                    const latest = memberData[memberData.length - 1]; 
+                    todayReadings.push({ member: m, reading: latest });
+                    
+                    if (latest.glucose) {
+                        const unit = latest.glucoseUnit || 'mmol/L';
+                        const status = classifyGlucose(latest.glucose, unit);
+                        statuses[status.label] = (statuses[status.label] || 0) + 1;
+                    }
+                    if (latest.context) contexts.add(latest.context);
+                } else {
+                    todayReadings.push({ member: m, reading: null });
+                }
+            });
+
+            const completedCount = todayReadings.filter(r => r.reading !== null).length;
+            
+            document.getElementById('results-progress').innerText = `${completedCount} / 4 Completed`;
+            const pandaContainer = document.getElementById('results-panda-container');
+            const pandaMessage = document.getElementById('results-panda-message');
+            const subtitle = document.getElementById('results-subtitle');
+
+            const allBuddiesStr = members.map(m => m.buddy).join(' ');
+
+            if (completedCount === 4) {
+                subtitle.innerText = "Everyone's checked in!";
+                pandaContainer.innerHTML = `<span class="panda-clap tracking-widest">${allBuddiesStr}</span>`;
+                pandaMessage.innerHTML = '🎉 Family Check Complete!';
+                pandaMessage.className = 'text-sm font-bold bg-green-100 text-green-700 inline-block px-4 py-2 rounded-full shadow-sm transition-all duration-300 mt-2';
+            } else {
+                subtitle.innerText = "Check-ins in progress";
+                pandaContainer.innerHTML = `<span class="panda-wave tracking-widest">${allBuddiesStr}</span>`;
+                pandaMessage.innerHTML = `Almost there! ${4 - completedCount} more family member(s) to check in.`;
+                pandaMessage.className = 'text-sm font-semibold bg-orange-100 text-orange-700 inline-block px-4 py-2 rounded-full shadow-sm transition-all duration-300 mt-2';
+            }
+
+            const grid = document.getElementById('results-cards-grid');
+            grid.innerHTML = '';
+            
+            todayReadings.forEach(item => {
+                const card = document.createElement('div');
+                
+                if (item.reading) {
+                    const r = item.reading;
+                    const unit = r.glucoseUnit || 'mmol/L';
+                    const status = classifyGlucose(r.glucose, unit);
+                    
+                    let glowClass = 'glow-normal';
+                    let buddyAnim = 'buddy-happy';
+                    let speechText = 'Yay! Great check-in!';
+                    let bgIcon = '🟢';
+
+                    if(status.class.includes('low')) { glowClass = 'glow-low'; buddyAnim = 'buddy-concerned'; speechText = "Let's check this with Mommy and Daddy."; bgIcon = '🔵'; }
+                    if(status.class.includes('borderline')) { glowClass = 'glow-borderline'; buddyAnim = 'buddy-thoughtful'; speechText = "Let's keep an eye on this one."; bgIcon = '🟡'; }
+                    if(status.class.includes('high')) { glowClass = 'glow-high'; buddyAnim = 'buddy-concerned'; speechText = "Let's check this with Mommy and Daddy."; bgIcon = '🔴'; }
+                    if(status.class.includes('very-high')) { glowClass = 'glow-very-high'; buddyAnim = 'buddy-concerned'; speechText = "Let's check this with Mommy and Daddy."; bgIcon = '🔴'; }
+                    
+                    const timeStr = formatFriendlyTime(r.time);
+                    
+                    card.className = `glass-card glass rounded-[2rem] p-6 cursor-pointer flex flex-col items-center justify-center h-full border ${glowClass} relative overflow-visible transition-all bg-white/50 text-center`;
+                    card.onclick = () => showDashboard(item.member);
+
+                    card.innerHTML = `
+                        <div class="speech-bubble">${speechText}</div>
+                        <div class="stage-spotlight absolute inset-0 rounded-[2rem] opacity-50 z-0 pointer-events-none"></div>
+                        <div class="relative z-10 w-full flex flex-col items-center">
+                            <span class="text-xs font-semibold text-gray-400 bg-white/80 px-2 py-0.5 rounded-full mb-3 shadow-sm border border-gray-100 flex items-center gap-1">
+                                <i class="ph-bold ph-clock"></i> ${timeStr}
+                            </span>
+                            <div class="text-7xl mb-2 drop-shadow-md ${buddyAnim} select-none">
+                                ${item.member.buddy || item.member.icon}
+                            </div>
+                            <h4 class="font-bold text-xl text-gray-900 mb-4">${item.member.name}</h4>
+                            <div class="w-full bg-white/60 rounded-2xl p-3 border border-white/80 shadow-sm flex flex-col items-center">
+                                <div class="flex items-baseline gap-1 mb-1">
+                                    <span class="text-3xl font-extrabold text-gray-900 tracking-tight">${r.glucose}</span>
+                                    <span class="text-xs text-gray-500 font-bold">${unit}</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">${r.context || 'Unknown'}</span>
+                                <span class="status-badge ${status.class} !text-xs w-full justify-center shadow-sm">${bgIcon} ${status.label}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    card.className = `glass-card glass rounded-[2rem] p-6 flex flex-col items-center justify-center text-center border-dashed border-2 border-gray-300 bg-gray-50/40 opacity-80 min-h-[280px]`;
+                    card.innerHTML = `
+                        <div class="text-5xl grayscale opacity-30 mb-4">${item.member.buddy || item.member.icon}</div>
+                        <h4 class="font-bold text-gray-500 text-lg mb-2">${item.member.name}</h4>
+                        <p class="text-sm text-gray-400 mb-4 font-medium">Pending check-in</p>
+                    `;
+                }
+                grid.appendChild(card);
+            });
+
+            const snapshot = document.getElementById('results-snapshot');
+            let statusHtml = '';
+            const emojiMap = { 'Normal': '🟢', 'Borderline': '🟡', 'High': '🔴', 'Very High': '🔴', 'Low': '🔵' };
+            
+            if (Object.keys(statuses).length > 0) {
+                for (const [label, count] of Object.entries(statuses).sort()) {
+                    statusHtml += `<div class="text-sm font-medium text-gray-700 flex justify-between bg-white/40 px-3 py-1.5 rounded-lg border border-white/50">
+                        <span>${emojiMap[label] || '⚪'} ${label}</span>
+                        <span class="font-bold text-gray-900">${count}</span>
+                    </div>`;
+                }
+            } else {
+                statusHtml = '<div class="text-sm text-gray-400 italic">No statuses recorded yet</div>';
+            }
+
+            const ctxArray = Array.from(contexts);
+            const commonContext = ctxArray.length > 0 ? ctxArray.join(', ') : 'Pending...';
+            const familyStreak = getFamilyStreak();
+            const streakText = familyStreak === 1 ? '1 Day' : familyStreak + ' Days';
+
+            snapshot.innerHTML = `
+                <div class="bg-white/50 rounded-2xl p-4 flex flex-col border border-white">
+                    <span class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Category Count</span>
+                    <div class="space-y-2">${statusHtml}</div>
+                </div>
+                <div class="bg-white/50 rounded-2xl p-4 flex flex-col justify-between border border-white">
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1 block">Family Streak</span>
+                        <div class="text-xl font-bold text-orange-500 flex items-center gap-1">🔥 ${streakText}</div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1 block">Recorded Contexts</span>
+                        <div class="text-sm font-medium text-gray-800 line-clamp-2">${commonContext}</div>
+                    </div>
+                </div>
+            `;
+
+            populateDetailsList(todayReadings);
+            updateDecorativeBuddiesMood(todayReadings);
+            showScreen('results-screen');
+        }
+
+        function populateDetailsList(todayReadings) {
+            const list = document.getElementById('details-list');
+            list.innerHTML = '';
+            let hasRecords = false;
+
+            todayReadings.forEach(item => {
+                if (!item.reading) return;
+                hasRecords = true;
+                
+                const r = item.reading;
+                const unit = r.glucoseUnit || 'mmol/L';
+                const status = classifyGlucose(r.glucose, unit);
+                const timeStr = formatFriendlyTime(r.time);
+                
+                let extraDataHtml = '';
+                if (r.sys || r.weight || r.pulse || r.temp) {
+                    extraDataHtml = `
+                        <div class="mt-3 grid grid-cols-2 gap-2 text-sm bg-white/50 rounded-xl p-3 border border-white/60">
+                            ${r.sys ? `<div><span class="text-gray-400">BP:</span> <span class="font-bold text-gray-700">${r.sys}/${r.dia}</span></div>` : ''}
+                            ${r.weight ? `<div><span class="text-gray-400">Weight:</span> <span class="font-bold text-gray-700">${r.weight}kg</span></div>` : ''}
+                            ${r.pulse ? `<div><span class="text-gray-400">Pulse:</span> <span class="font-bold text-gray-700">${r.pulse}bpm</span></div>` : ''}
+                            ${r.temp ? `<div><span class="text-gray-400">Temp:</span> <span class="font-bold text-gray-700">${r.temp}°C</span></div>` : ''}
+                        </div>
+                    `;
+                }
+
+                let notesHtml = '';
+                if (r.notes) {
+                     notesHtml = `<div class="mt-2 text-sm text-gray-600 bg-yellow-50/50 p-2 rounded-lg italic border border-yellow-100/50">"${r.notes}"</div>`;
+                }
+                
+                const div = document.createElement('div');
+                div.className = 'glass p-4 rounded-2xl border border-white/60 shadow-sm flex flex-col relative overflow-hidden bg-gradient-to-br from-white/60 to-white/30';
+                div.innerHTML = `
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-${status.class.split('-')[1]}-100 to-transparent opacity-50 rounded-bl-3xl"></div>
+                    <div class="flex justify-between items-start mb-2 relative z-10">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${item.member.buddy}</span>
+                            <h4 class="font-bold text-gray-900 text-lg">${item.member.name}</h4>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full shadow-sm border border-gray-100 flex items-center gap-1">
+                            <i class="ph-bold ph-clock"></i> ${timeStr}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-end relative z-10">
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-extrabold text-gray-900">${r.glucose}</span>
+                                <span class="text-xs text-gray-500 font-bold">${unit}</span>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">${r.context || 'Recorded'}</span>
+                        </div>
+                        <span class="status-badge ${status.class} !text-xs">${status.label}</span>
+                    </div>
+                    ${extraDataHtml}
+                    ${notesHtml}
+                `;
+                list.appendChild(div);
+            });
+
+            if (!hasRecords) {
+                list.innerHTML = '<div class="text-center text-gray-500 py-8 font-medium">No details available for this session.</div>';
+            }
+        }
+
+        function toggleDetailsModal() {
+            const modal = document.getElementById('details-modal');
+            const content = document.getElementById('details-modal-content');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('translate-y-full', 'sm:translate-y-full');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('translate-y-full', 'sm:translate-y-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+
+        // ==================== HEALTH VISIT ====================
+        function openHealthVisitSetup() {
+            activeVisitState = { memberId: null, type: null, mood: null };
+            activeVisitTags = [];
+            
+            document.getElementById('visit-custom-type').value = '';
+            document.getElementById('visit-date').value = new Date().toISOString().slice(0,10);
+            document.getElementById('visit-clinic').value = '';
+            document.getElementById('visit-doctor').value = '';
+            document.getElementById('visit-notes').value = '';
+            document.getElementById('visit-tags-container').classList.add('hidden');
+            
+            const memberContainer = document.getElementById('visit-member-container');
+            memberContainer.innerHTML = members.map(m => `
+                <button type="button" onclick="selectVisitMember('${m.id}')" id="visit-member-${m.id}" class="visit-member-btn shrink-0 w-16 h-16 rounded-2xl glass flex flex-col items-center justify-center gap-1 border-2 border-transparent transition-all grayscale opacity-60">
+                    <span class="text-2xl drop-shadow-sm">${m.buddy}</span>
+                </button>
+            `).join('');
+            
+            if(members.length > 0) selectVisitMember(members[0].id);
+            selectVisitType('🦷 Dentist');
+            
+            document.querySelectorAll('.visit-mood-btn').forEach(btn => {
+                btn.classList.add('border-transparent', 'text-gray-500');
+                btn.classList.remove('border-blue-400', 'bg-blue-50', 'text-blue-800', 'shadow-sm');
+            });
+            
+            showScreen('health-visit-screen');
+        }
+
+        function selectVisitMember(id) {
+            activeVisitState.memberId = id;
+            document.querySelectorAll('.visit-member-btn').forEach(btn => {
+                btn.classList.add('grayscale', 'opacity-60', 'border-transparent');
+                btn.classList.remove('scale-105', 'shadow-md', 'grayscale-0', 'opacity-100');
+            });
+            const selected = document.getElementById(`visit-member-${id}`);
+            const member = members.find(m => m.id === id);
+            selected.classList.remove('grayscale', 'opacity-60', 'border-transparent');
+            selected.classList.add('scale-105', 'shadow-md', 'grayscale-0', 'opacity-100');
+            selected.style.borderColor = member.color;
+        }
+
+        function selectVisitType(type) {
+            if(type !== 'Custom') document.getElementById('visit-custom-type').value = '';
+            const actualType = type === 'Custom' ? document.getElementById('visit-custom-type').value.trim() : type;
+            activeVisitState.type = actualType;
+
+            document.querySelectorAll('.visit-type-btn').forEach(btn => {
+                btn.classList.remove('border-teal-500', 'bg-teal-50', 'text-teal-700');
+                btn.classList.add('border-transparent');
+                const cleanType = type.replace(/[\u1000-\uFFFF]+/g, '').trim();
+                const btnCleanText = btn.innerText.replace(/[\u1000-\uFFFF]+/g, '').trim();
+                
+                if (btnCleanText === cleanType && type !== 'Custom') {
+                    btn.classList.add('border-teal-500', 'bg-teal-50', 'text-teal-700');
+                    btn.classList.remove('border-transparent');
+                }
+            });
+            
+            activeVisitTags = [];
+            const tagsContainer = document.getElementById('visit-tags-container');
+            const tagsList = document.getElementById('visit-tags-list');
+            
+            if (visitTagsMap[type]) {
+                tagsContainer.classList.remove('hidden');
+                tagsList.innerHTML = visitTagsMap[type].map(tag => `
+                    <button type="button" onclick="toggleVisitTag('${tag}')" id="tag-btn-${tag.replace(/[^a-zA-Z0-9]/g, '')}" class="glass px-3 py-1.5 rounded-full text-sm font-medium border border-transparent text-gray-500 hover:bg-white/80 transition-all">${tag}</button>
+                `).join('');
+            } else {
+                tagsContainer.classList.add('hidden');
+            }
+        }
+        
+        function toggleVisitTag(tag) {
+            const index = activeVisitTags.indexOf(tag);
+            const btn = document.getElementById(`tag-btn-${tag.replace(/[^a-zA-Z0-9]/g, '')}`);
+            if (index > -1) {
+                activeVisitTags.splice(index, 1);
+                btn.classList.remove('bg-teal-100', 'border-teal-300', 'text-teal-800');
+                btn.classList.add('glass', 'text-gray-500');
+            } else {
+                activeVisitTags.push(tag);
+                btn.classList.add('bg-teal-100', 'border-teal-300', 'text-teal-800');
+                btn.classList.remove('glass', 'text-gray-500');
+            }
+        }
+
+        function selectVisitMood(mood) {
+            activeVisitState.mood = mood;
+            document.querySelectorAll('.visit-mood-btn').forEach(btn => {
+                btn.classList.add('border-transparent', 'text-gray-500');
+                btn.classList.remove('border-blue-400', 'bg-blue-50', 'text-blue-800', 'shadow-sm');
+                if (btn.dataset.mood === mood) {
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                    btn.classList.add('border-blue-400', 'bg-blue-50', 'text-blue-800', 'shadow-sm');
+                }
+            });
+        }
+
+        function saveHealthVisit() {
+            if(!activeVisitState.type) selectVisitType('Custom');
+            if(!activeVisitState.type) return;
+
+            const member = members.find(m => m.id === activeVisitState.memberId);
+            const now = new Date();
+            const userDate = document.getElementById('visit-date').value;
+            const recordDate = userDate ? new Date(userDate) : now;
+
+            const dateStr = recordDate.toISOString().slice(0, 10).replace(/-/g, '');
+            const randomId = Math.floor(100 + Math.random() * 900);
+            const sessionId = `V${dateStr}-${randomId}`;
+
+            let combinedNotes = [];
+            const clinic = document.getElementById('visit-clinic').value.trim();
+            const doctor = document.getElementById('visit-doctor').value.trim();
+            const rawNotes = document.getElementById('visit-notes').value.trim();
+            
+            if (clinic) combinedNotes.push(`[Clinic: ${clinic}]`);
+            if (doctor) combinedNotes.push(`[Doctor: ${doctor}]`);
+            if (activeVisitTags.length > 0) combinedNotes.push(`[Tags: ${activeVisitTags.join(', ')}]`);
+            if (activeVisitState.mood) combinedNotes.push(`[Mood: ${activeVisitState.mood}]`);
+            if (rawNotes) combinedNotes.push(rawNotes);
+
+            const newRecord = {
+                member: member.name,
+                date: recordDate.toISOString(),
+                time: now.toISOString(),
+                context: 'Health Visit',
+                glucose: '', glucoseUnit: '', notes: combinedNotes.join(' '),
+                mode: 'visit', sessionId: sessionId, sessionName: activeVisitState.type,
+                sys: '', dia: '', pulse: '', weight: '', temp: ''
+            };
+
+            healthData.push(newRecord);
+            renderHomeCards();
+            renderTodayTimeline();
+
+            const iconEmoji = activeVisitState.type.split(' ')[0] || '⭐';
+            const buddyMessage = (activeVisitState.mood && activeVisitState.mood.includes('Brave') || activeVisitState.mood && activeVisitState.mood.includes('Calm')) 
+                ? 'You were super brave today!' 
+                : 'We are so proud of you!';
+
+            document.getElementById('success-status-container').innerHTML = `
+                <div class="flex flex-col items-center mb-4">
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-300 w-24 h-24 rounded-full flex items-center justify-center shadow-lg mb-3 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                        <span class="text-5xl relative z-10">${iconEmoji}</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-gray-500 font-bold mb-1">Commemorative Sticker</span>
+                    <span class="status-badge status-normal text-lg px-4 py-1.5 shadow-sm bg-teal-50 text-teal-700 border-teal-200">${activeVisitState.type}</span>
+                </div>
+            `;
+            
+            document.getElementById('success-message').innerHTML = `<div class="font-bold text-gray-800 text-lg">"${buddyMessage}"</div>`;
+
+            const overlay = document.getElementById('success-overlay');
+            const successTitle = document.getElementById('success-title');
+            const wizardActionContainer = document.getElementById('wizard-next-action');
+            const defaultIcon = document.getElementById('default-success-icon');
+            const buddyContainer = document.getElementById('success-buddy-container');
+
+            buddyContainer.innerHTML = `<span class="panda-clap">${member.buddy}</span>`;
+            successTitle.innerText = `Great Job, ${member.name}!`;
+            defaultIcon.classList.remove('hidden');
+            wizardActionContainer.classList.add('hidden');
+            overlay.style.display = 'flex';
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                showScreen('home-screen');
+            }, 2000);
+
+            if (GAS_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                try {
+                    fetch(GAS_WEB_APP_URL, { 
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newRecord) 
+                    }).catch(e => console.log(e));
+                } catch(e) {}
+            }
+        }
+
+        // ==================== DASHBOARD & CHARTS ====================
+        function setPersonalTrendRange(days) {
+            currentPersonalTrendRange = days;
+            document.getElementById('btn-personal-trend-7d').className = days === 7 
+                ? 'px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all'
+                : 'px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all';
+            document.getElementById('btn-personal-trend-30d').className = days === 30
+                ? 'px-3 py-1 text-sm font-semibold rounded-md bg-white shadow-sm text-gray-900 transition-all'
+                : 'px-3 py-1 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 transition-all';
+            if (currentActiveMember) {
+                renderPersonalChart(currentActiveMember);
+            }
+        }
+
+        function showDashboard(member) {
+            currentActiveMember = member;
+            document.getElementById('dash-avatar').innerHTML = member.buddy;
+            document.getElementById('dash-avatar').style.color = member.color;
+            document.getElementById('dash-avatar').style.borderColor = member.color;
+            document.getElementById('dash-title').innerText = `${member.name}'s Health`;
+            document.getElementById('dash-bg-icon').innerText = member.buddy;
+
+            // Filter member data for glucose readings
+            const memberData = healthData
+                .filter(d => d.member === member.name && d.glucose && d.mode !== 'visit')
+                .sort((a, b) => new Date(a.date) - new Date(b.date)); 
+
+            const latest = memberData.length > 0 ? memberData[memberData.length - 1] : null;
+            
+            // Latest Reading Section
+            if (latest) {
+                const unit = latest.glucoseUnit || 'mmol/L';
+                const status = classifyGlucose(latest.glucose, unit);
+                const timeStr = formatFriendlyTime(latest.time);
+                const dateStr = formatFriendlyDate(latest.date);
+                
+                document.getElementById('dash-latest-glucose').innerText = latest.glucose;
+                document.getElementById('dash-latest-unit').innerText = unit;
+                
+                document.getElementById('dash-latest-details').innerHTML = `
+                    <span class="status-badge ${status.class} text-sm shadow-sm">${status.label}</span>
+                    <span class="text-xs font-semibold text-gray-600 bg-white/80 px-2 py-1 rounded-lg border border-gray-200 shadow-sm flex items-center gap-1">${latest.context || latest.sessionName || 'Reading'}</span>
+                    <span class="text-xs font-semibold text-gray-600 bg-white/80 px-2 py-1 rounded-lg border border-gray-200 shadow-sm flex items-center gap-1"><i class="ph-bold ph-clock"></i> ${dateStr} • ${timeStr}</span>
+                `;
+            } else {
+                document.getElementById('dash-latest-glucose').innerText = '--';
+                document.getElementById('dash-latest-unit').innerText = '';
+                document.getElementById('dash-latest-details').innerHTML = '<span class="text-sm text-gray-500 font-medium">No readings available yet.</span>';
+            }
+
+            // Weekly Summary Cards
+            const now = new Date();
+            const weekData = memberData.filter(d => (now - new Date(d.date)) / (1000 * 60 * 60 * 24) <= 7);
+            const summaryContainer = document.getElementById('dash-weekly-summary');
+            
+            if (weekData.length > 0) {
+                const glucoseVals = weekData.map(d => parseFloat(d.glucose));
+                const avg = (glucoseVals.reduce((a, b) => a + b, 0) / glucoseVals.length).toFixed(1);
+                const high = Math.max(...glucoseVals).toFixed(1);
+                const low = Math.min(...glucoseVals).toFixed(1);
+                
+                summaryContainer.innerHTML = `
+                    <div class="glass p-3 sm:p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm border border-white/60">
+                        <span class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase mb-1 block w-full truncate tracking-wider">Average</span>
+                        <span class="text-xl sm:text-2xl font-bold text-gray-800">${avg}</span>
+                    </div>
+                    <div class="glass p-3 sm:p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm border border-white/60">
+                        <span class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase mb-1 block w-full truncate tracking-wider">Highest</span>
+                        <span class="text-xl sm:text-2xl font-bold text-red-500">${high}</span>
+                    </div>
+                    <div class="glass p-3 sm:p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm border border-white/60">
+                        <span class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase mb-1 block w-full truncate tracking-wider">Lowest</span>
+                        <span class="text-xl sm:text-2xl font-bold text-blue-500">${low}</span>
+                    </div>
+                `;
+            } else {
+                summaryContainer.innerHTML = '<div class="col-span-3 text-center text-gray-500 text-sm font-medium glass p-4 rounded-2xl border border-white/60">No readings in the past 7 days</div>';
+            }
+
+            const insightsContainer = document.getElementById('dash-insights-container');
+            const insightsList = document.getElementById('dash-insights-list');
+            insightsList.innerHTML = '';
+            
+            if (memberData.length > 0) {
+                let insights = [];
+                const latestIdx = memberData.length - 1;
+                const latestRead = memberData[latestIdx];
+                const unit = latestRead.glucoseUnit || 'mmol/L';
+                
+                // 1. Average check (using weekData if available, else all data)
+                const checkData = weekData.length > 0 ? weekData : memberData;
+                const glucoseVals = checkData.map(d => parseFloat(d.glucose));
+                const avg = glucoseVals.reduce((a, b) => a + b, 0) / glucoseVals.length;
+                
+                const avgThreshold = unit === 'mg/dL' ? 144 : 8.0;
+                if (avg > avgThreshold) {
+                    insights.push({ text: "Watch after-lunch spikes.", type: 'amber', icon: 'ph-warning' });
+                }
+
+                // 2. Latest < Previous
+                if (memberData.length >= 2) {
+                    const prevRead = memberData[latestIdx - 1];
+                    if (parseFloat(latestRead.glucose) < parseFloat(prevRead.glucose)) {
+                        insights.push({ text: "Improving trend.", type: 'blue', icon: 'ph-trend-down' });
+                    }
+                }
+
+                // 3. Three consecutive normal
+                if (memberData.length >= 3) {
+                    const last3 = memberData.slice(-3);
+                    const allNormal = last3.every(d => classifyGlucose(d.glucose, d.glucoseUnit || 'mmol/L').label === 'Normal');
+                    if (allNormal) {
+                        insights.push({ text: "Great consistency.", type: 'green', icon: 'ph-check-circle' });
+                    }
+                }
+
+                // Default if no insights trigger
+                if (insights.length === 0) {
+                    insights.push({ text: "Keep tracking to generate more insights.", type: 'blue', icon: 'ph-info' });
+                }
+
+                // Render up to 3 insights
+                insights.slice(0, 3).forEach(ins => {
+                    let bgClass = ins.type === 'green' ? 'bg-green-50 border-green-200 text-green-800' :
+                                  ins.type === 'amber' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                                                         'bg-blue-50 border-blue-200 text-blue-800';
+                    let iconColor = ins.type === 'green' ? 'text-green-600' :
+                                    ins.type === 'amber' ? 'text-amber-600' :
+                                                           'text-blue-600';
+                    
+                    insightsList.innerHTML += `
+                        <div class="${bgClass} border p-4 rounded-2xl flex items-start gap-3 shadow-sm transition-transform hover:-translate-y-1">
+                            <i class="ph-fill ${ins.icon} text-xl mt-0.5 ${iconColor}"></i>
+                            <p class="font-semibold text-sm">${ins.text}</p>
+                        </div>
+                    `;
+                });
+                insightsContainer.style.display = 'block';
+            } else {
+                insightsContainer.style.display = 'none';
+            }
+
+            // Recent History (latest 5)
+            const recentHistoryContainer = document.getElementById('dash-recent-history');
+            const recentData = [...memberData].reverse().slice(0, 5); // Newest first
+            
+            if (recentData.length > 0) {
+                let historyHtml = '';
+                recentData.forEach(r => {
+                    const unit = r.glucoseUnit || 'mmol/L';
+                    const status = classifyGlucose(r.glucose, unit);
+                    const timeStr = formatFriendlyTime(r.time);
+                    const dateStr = formatFriendlyDate(r.date);
+                    
+                    historyHtml += `
+                        <div class="glass p-4 rounded-2xl border border-white/60 shadow-sm flex justify-between items-center transition-transform hover:-translate-y-1">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-900">${r.context || r.sessionName || 'Reading'}</span>
+                                <span class="text-xs font-semibold text-gray-500">${dateStr} • ${timeStr}</span>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <div class="flex items-baseline gap-1">
+                                    <span class="font-extrabold text-lg text-gray-900">${r.glucose}</span>
+                                    <span class="text-[10px] font-bold text-gray-400">${unit}</span>
+                                </div>
+                                <span class="status-badge ${status.class} !text-[9px] shadow-sm">${status.label}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                recentHistoryContainer.innerHTML = historyHtml;
+            } else {
+                recentHistoryContainer.innerHTML = '<div class="text-center text-gray-500 text-sm font-medium glass p-4 rounded-2xl border border-white/60">No recent history</div>';
+            }
+
+            // Render Chart
+            renderPersonalChart(member);
+            showScreen('dashboard-screen');
+        }
+
+        function renderPersonalChart(member) {
+            if (typeof Chart === 'undefined') return;
+            const ctx = document.getElementById('personal-trend-chart');
+            if (!ctx) return;
+
+            const daysToFetch = currentPersonalTrendRange;
+            const labels = [];
+            const dateMap = {}; 
+            
+            // Build trailing days backward
+            for (let i = daysToFetch - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toDateString();
+                const friendlyLabel = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+                labels.push(friendlyLabel);
+                dateMap[dateStr] = (daysToFetch - 1) - i;
+            }
+
+            const chartData = new Array(daysToFetch).fill(null);
+            const dataByDate = {};
+            
+            healthData.forEach(r => {
+                if (r.member !== member.name || !r.glucose || !r.date || r.mode === 'visit') return;
+                const d = new Date(r.date);
+                if (isNaN(d.getTime())) return;
+                const dateStr = d.toDateString();
+                
+                if (dateMap[dateStr] !== undefined) {
+                    if (!dataByDate[dateStr]) dataByDate[dateStr] = [];
+                    dataByDate[dateStr].push(parseFloat(r.glucose));
+                }
+            });
+
+            // Calculate daily average
+            Object.keys(dataByDate).forEach(dateStr => {
+                const idx = dateMap[dateStr];
+                const values = dataByDate[dateStr];
+                const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                chartData[idx] = avg.toFixed(1);
+            });
+
+            if (personalChartInstance) {
+                personalChartInstance.destroy();
+            }
+
+            personalChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { 
+                    labels, 
+                    datasets: [{
+                        label: member.name,
+                        data: chartData,
+                        borderColor: member.color,
+                        backgroundColor: member.color,
+                        borderWidth: 3,
+                        tension: 0.4,
+                        spanGaps: true,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: daysToFetch > 14 ? 2 : 4,
+                        pointHoverRadius: 6
+                    }] 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4,
+                            usePointStyle: true
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { 
+                                font: { family: 'Inter', size: 11 }, 
+                                color: '#6b7280',
+                                maxTicksLimit: daysToFetch === 30 ? 10 : undefined
+                            }
+                        },
+                        y: { 
+                            border: { display: false },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Inter', size: 11 }, color: '#6b7280', padding: 10 }
+                        }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        }
+
+        // ==================== SETTINGS / PROFILES ====================
+        function renderSettingsProfiles() {
+            const grid = document.getElementById('settings-profiles-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            
+            members.forEach(m => {
+                grid.innerHTML += `
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between border-t-4" style="border-color: ${m.color}">
+                        <div class="flex items-center gap-4">
+                            <div class="text-4xl bg-white w-14 h-14 rounded-full flex items-center justify-center shadow-sm border border-gray-100">${m.buddy}</div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-lg">${m.name}</h3>
+                                <p class="text-sm text-gray-500 font-medium">${m.gender || 'Not specified'} • ${m.birthday ? calculateAge(m.birthday) : 'No birthday set'}</p>
+                            </div>
+                        </div>
+                        <button onclick="openProfileEdit('${m.id}')" class="p-2 rounded-full glass hover:bg-white/80 transition-colors shadow-sm text-gray-600"><i class="ph-bold ph-pencil-simple text-xl"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function openProfileEdit(id) {
+            const member = members.find(m => m.id === id);
+            if(!member) return;
+            
+            document.getElementById('edit-id').value = member.id;
+            document.getElementById('edit-name').value = member.name;
+            document.getElementById('edit-buddy').value = member.buddy;
+            document.getElementById('edit-birthday').value = member.birthday || '';
+            document.getElementById('edit-gender').value = member.gender || '';
+            document.getElementById('edit-color').value = member.color;
+            
+            const modal = document.getElementById('profile-edit-modal');
+            const content = document.getElementById('profile-edit-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function closeProfileEdit() {
+            const modal = document.getElementById('profile-edit-modal');
+            const content = document.getElementById('profile-edit-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+
+        function saveProfile(e) {
+    if (e) e.preventDefault();
+
+    try {
+        const id = document.getElementById('edit-id').value;
+        const memberIndex = members.findIndex(m => String(m.id) === String(id));
+
+        if (memberIndex === -1) {
+            alert("Member not found.");
+            return false;
+        }
+
+        const oldName = members[memberIndex].name;
+        const newName = document.getElementById('edit-name').value.trim();
+
+        // Update old records if name changed
+        if (oldName !== newName && newName !== '') {
+            healthData.forEach(record => {
+                if (record.member === oldName) {
+                    record.member = newName;
+                }
+            });
+        }
+
+        // Update member
+        members[memberIndex] = {
+            ...members[memberIndex],
+            name: newName || oldName,
+            buddy: document.getElementById('edit-buddy').value,
+            icon: document.getElementById('edit-buddy').value,
+            birthday: document.getElementById('edit-birthday').value || '',
+            gender: document.getElementById('edit-gender').value || '',
+            color: document.getElementById('edit-color').value || members[memberIndex].color
+        };
+
+        // Save locally
+        localStorage.setItem('familyMembers', JSON.stringify(members));
+
+// Refresh UI once only
+if (typeof renderSettingsProfiles === 'function') renderSettingsProfiles();
+if (typeof renderHomeCards === 'function') renderHomeCards();
+if (typeof initDecorativeBuddies === 'function') initDecorativeBuddies();
+
+console.log("Saved");
+console.log("Members after save:", JSON.stringify(members, null, 2));
+closeProfileEdit();
+
+return false;
+
+    }catch(err){
+        console.error(err);
+        alert(err.message);
+    }
+}
+
+        // ==================== DECORATIVE BUDDIES & ANIMATIONS ====================
+        function initDecorativeBuddies() {
+            const container = document.getElementById('decorative-buddies-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const positions = ['corner-pos-0', 'corner-pos-1', 'corner-pos-2', 'corner-pos-3'];
+            const animations = ['anim-peek-left', 'anim-peek-right', 'anim-peek-left', 'anim-peek-right'];
+            
+            members.forEach((m, index) => {
+                if (index > 3) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = `corner-buddy-wrapper ${positions[index]}`;
+                wrapper.innerHTML = `
+                    <div class="corner-speech" id="speech-bubble-${m.id}"></div>
+                    <div class="${animations[index]} drop-shadow-sm opacity-60 hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-4xl sm:text-5xl select-none" id="mood-target-${m.id}">${m.buddy}</div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+            startSpeechBubbles();
+        }
+
+        function updateDecorativeBuddiesMood(todayReadings) {
+            todayReadings.forEach(item => {
+                if(!item.reading) return;
+                const unit = item.reading.glucoseUnit || 'mmol/L';
+                const status = classifyGlucose(item.reading.glucose, unit);
+                const moodTarget = document.getElementById(`mood-target-${item.member.id}`);
+                
+                if(moodTarget) {
+                    moodTarget.classList.remove('buddy-happy', 'buddy-thoughtful', 'buddy-concerned');
+                    if (status.class.includes('low') || status.class.includes('high') || status.class.includes('very-high')) {
+                        moodTarget.classList.add('buddy-concerned');
+                    } else if (status.class.includes('borderline')) {
+                        moodTarget.classList.add('buddy-thoughtful');
+                    } else {
+                        moodTarget.classList.add('buddy-happy');
+                    }
+                }
+            });
+        }
+
+        function startSpeechBubbles() {
+            if(speechInterval) clearInterval(speechInterval);
+            speechInterval = setInterval(() => {
+                members.forEach(m => {
+                    const el = document.getElementById(`speech-bubble-${m.id}`);
+                    if(el) el.classList.remove('show');
+                });
+                const randomMember = members[Math.floor(Math.random() * Math.min(members.length, 4))];
+                const speechEl = document.getElementById(`speech-bubble-${randomMember.id}`);
+                
+                if(speechEl) {
+                    speechEl.innerText = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+                    speechEl.classList.add('show');
+                    setTimeout(() => { speechEl.classList.remove('show'); }, 4000);
+                }
+            }, Math.random() * 5000 + 10000); 
+        }
+
+        function triggerConfetti() {
+            const colors = ['#f472b6', '#a3e635', '#3b82f6', '#22c55e', '#facc15'];
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = Math.random() * 8 + 4 + 'px';
+                confetti.style.height = Math.random() * 8 + 4 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-10px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.zIndex = '9999';
+                confetti.style.pointerEvents = 'none';
+                document.body.appendChild(confetti);
+
+                const duration = Math.random() * 2 + 2;
+                confetti.animate([
+                    { transform: `translate3d(0, 0, 0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate3d(${Math.random()*150 - 75}px, 100vh, 0) rotate(${Math.random()*360}deg)`, opacity: 0 }
+                ], { duration: duration * 1000, easing: 'cubic-bezier(.37,0,.63,1)', fill: 'forwards' });
+                setTimeout(() => confetti.remove(), duration * 1000);
+            }
+        }
+
+        // Run application on load
+        window.onload = function() {
+            // Load members from localStorage if available
+            const savedMembers = localStorage.getItem('familyMembers');
+            if (savedMembers) {
+                try {
+                    members = JSON.parse(savedMembers);
+                } catch (e) {
+                    console.error("Failed to parse saved members from localStorage", e);
+                }
+            }
+            initApp();
+        };
+
+    </script>
+</body>
+</html>
