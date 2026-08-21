@@ -1095,6 +1095,53 @@
         }
 
         // ==================== UTILITIES ====================
+        function isTodayInMalaysia(dateRaw) {
+            if (!dateRaw) return false;
+            
+            try {
+                // Get today's date in Malaysia timezone
+                const options = { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'numeric', day: 'numeric' };
+                const todayStr = new Date().toLocaleDateString('en-US', options); 
+                const [tMonth, tDay, tYear] = todayStr.split('/');
+                
+                // Helper to match extracted date components safely
+                const isMatch = (y, m, d) => {
+                    return parseInt(y, 10) === parseInt(tYear, 10) && 
+                           parseInt(m, 10) === parseInt(tMonth, 10) && 
+                           parseInt(d, 10) === parseInt(tDay, 10);
+                };
+
+                // 1. Support dd/MM/yyyy format natively without local timezone shifting
+                if (typeof dateRaw === 'string' && dateRaw.includes('/')) {
+                    const datePart = dateRaw.split(/[T\s]/)[0];
+                    const parts = datePart.split('/');
+                    if (parts.length === 3) {
+                        let d = parts[0];
+                        let m = parts[1];
+                        let y = parts[2];
+                        
+                        // Fallback if sheet actually exported MM/DD/YYYY
+                        if (parseInt(m, 10) > 12) {
+                            d = parts[1];
+                            m = parts[0];
+                        }
+                        return isMatch(y, m, d);
+                    }
+                }
+                
+                // 2. Fallback for standard ISO strings like 2026-08-20T...
+                const recordDate = new Date(dateRaw);
+                if (!isNaN(recordDate.getTime())) {
+                    const recordStr = recordDate.toLocaleDateString('en-US', options);
+                    return todayStr === recordStr;
+                }
+            } catch (e) {
+                console.warn("Timezone comparison error:", e);
+            }
+            
+            return false;
+        }
+
         function calculateAge(dateString) {
             if (!dateString) return '';
             const today = new Date();
@@ -1296,12 +1343,7 @@
             const container = document.getElementById('today-timeline');
             if (!container) return;
             
-            const todayStr = new Date().toDateString();
-            const todayRecords = healthData.filter(r => {
-                if (!r.date) return false;
-                const d = new Date(r.date);
-                return !isNaN(d.getTime()) && d.toDateString() === todayStr;
-            });
+            const todayRecords = healthData.filter(r => isTodayInMalaysia(r.date));
 
             if (todayRecords.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500 font-medium py-6 glass rounded-2xl">No activity recorded today yet.</div>';
@@ -1877,15 +1919,23 @@
         }
 
         function showResultsScreen(targetSessionId = null) {
-            const today = new Date().toDateString();
-            const todayRecords = healthData.filter(d => d.date && new Date(d.date).toDateString() === today && d.sessionId && !d.sessionId.startsWith('V'));
+            // Filter safely for today's records in Malaysia timezone, ensuring valid sessionId
+            const todayRecords = healthData.filter(d => {
+                return isTodayInMalaysia(d.date) && d.sessionId && !String(d.sessionId).startsWith('V');
+            });
             
             const sessionsMap = new Map();
             todayRecords.forEach(r => {
                 if(!sessionsMap.has(r.sessionId)) {
                     const dateFormatted = formatFriendlyDate(r.date);
                     const timeFormatted = formatFriendlyTime(r.time);
-                    sessionsMap.set(r.sessionId, { name: r.sessionName, id: r.sessionId, time: timeFormatted, dateStr: dateFormatted, rawDate: r.date });
+                    sessionsMap.set(r.sessionId, { 
+                        name: r.sessionName || 'Session', 
+                        id: r.sessionId, 
+                        time: timeFormatted, 
+                        dateStr: dateFormatted, 
+                        rawDate: r.date 
+                    });
                 }
             });
             
