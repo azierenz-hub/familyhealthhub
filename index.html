@@ -1774,11 +1774,13 @@
             }
             
             const now = new Date();
+            const localDate = now.toLocaleDateString("en-GB", { timeZone: "Asia/Kuala_Lumpur" });
+            const localTime = now.toLocaleTimeString("en-US", { timeZone: "Asia/Kuala_Lumpur", hour: "numeric", minute: "2-digit", hour12: true });
             
             const newRecord = {
                 member: memberName,
-                date: now.toISOString(),
-                time: now.toISOString(),
+                date: localDate,
+                time: localTime,
                 context: finalContext,
                 glucose: glucoseValue,
                 glucoseUnit: glucoseUnit,
@@ -2335,10 +2337,13 @@
             if (activeVisitState.mood) combinedNotes.push(`[Mood: ${activeVisitState.mood}]`);
             if (rawNotes) combinedNotes.push(rawNotes);
 
+            const localDate = recordDate.toLocaleDateString("en-GB", { timeZone: "Asia/Kuala_Lumpur" });
+            const localTime = now.toLocaleTimeString("en-US", { timeZone: "Asia/Kuala_Lumpur", hour: "numeric", minute: "2-digit", hour12: true });
+
             const newRecord = {
                 member: member.name,
-                date: recordDate.toISOString(),
-                time: now.toISOString(),
+                date: localDate,
+                time: localTime,
                 context: 'Health Visit',
                 glucose: '', glucoseUnit: '', notes: combinedNotes.join(' '),
                 mode: 'visit', sessionId: sessionId, sessionName: activeVisitState.type,
